@@ -1,0 +1,80 @@
+# ============================================================
+# Budomex monorepo — root .gitignore
+# Konsolidacja: frontend (Next.js) + backend (Spring Boot / Gradle)
+# ============================================================
+
+# ---------- IDE ----------
+.idea/workspace.xml
+.idea/shelf/
+.idea/queries/
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/httpRequests/
+.idea/**/usage.statistics.xml
+.idea/**/tasks.xml
+.idea/**/dictionaries
+.idea/**/shelf
+.vscode/
+*.iml
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ---------- Claude Code lokalne metadane ----------
+.claude/
+
+# ============================================================
+# Frontend (budomex-frontend / Next.js)
+# ============================================================
+budomex-frontend/node_modules/
+budomex-frontend/.next/
+budomex-frontend/out/
+budomex-frontend/build/
+budomex-frontend/.pnp
+budomex-frontend/.pnp.*
+budomex-frontend/.yarn/cache
+budomex-frontend/.yarn/install-state.gz
+budomex-frontend/.vercel
+budomex-frontend/*.tsbuildinfo
+budomex-frontend/next-env.d.ts
+budomex-frontend/coverage/
+
+# env (poza .env.example)
+budomex-frontend/.env*
+!budomex-frontend/.env.example
+
+# debug logs
+budomex-frontend/npm-debug.log*
+budomex-frontend/yarn-debug.log*
+budomex-frontend/yarn-error.log*
+budomex-frontend/.pnpm-debug.log*
+
+# ============================================================
+# Backend (budomex-backend / Spring Boot + Gradle)
+# ============================================================
+budomex-backend/.gradle/
+budomex-backend/build/
+budomex-backend/out/
+budomex-backend/bin/
+
+# Application secrets (zostaje .example)
+budomex-backend/src/main/resources/application.properties
+!budomex-backend/src/main/resources/application.properties.example
+
+# logs
+budomex-backend/*.log
+budomex-backend/logs/
+
+# H2 lokalna baza (in-memory ale czasem pojawia się plik)
+budomex-backend/*.db
+budomex-backend/*.trace.db
+budomex-backend/*.lock.db
+
+# ============================================================
+# Wspólne
+# ============================================================
+*.pem
+*.key
