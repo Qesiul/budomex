@@ -1,0 +1,44 @@
+spring.application.name=BudomexWebApp
+
+# ============================================================
+# SZABLON KONFIGURACJI
+# ------------------------------------------------------------
+# Skopiuj ten plik jako: src/main/resources/application.properties
+# (application.properties jest w .gitignore - nie trafia do repo)
+# i uzupelnij wartosci oznaczone CHANGE_ME.
+#
+# UWAGA: w plikach .properties znak '#' jest komentarzem TYLKO na
+# poczatku linii. Nie dopisuj komentarzy po wartosci w tej samej
+# linii - staja sie czescia wartosci.
+# ============================================================
+
+# --- Baza danych: PostgreSQL (zalecane, dane trwale) ---
+spring.datasource.url=jdbc:postgresql://localhost:5432/budomex_db
+spring.datasource.username=postgres
+# Wpisz tutaj swoje lokalne haslo do PostgreSQL:
+spring.datasource.password=CHANGE_ME
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# --- JPA / Hibernate ---
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+# 'update' - Hibernate tworzy/aktualizuje schemat przy starcie (dev).
+# 'validate' - tylko sprawdza istniejacy schemat (wymaga gotowej bazy).
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# --- Alternatywa: H2 in-memory (bez instalacji Postgresa) ---
+# Zakomentuj 4 linie datasource powyzej i odkomentuj ponizsze.
+# Dane sa nietrwale - znikaja po zatrzymaniu aplikacji.
+# spring.datasource.url=jdbc:h2:mem:budomex_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+# spring.datasource.driver-class-name=org.h2.Driver
+# spring.datasource.username=sa
+# spring.datasource.password=
+# spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+# spring.h2.console.enabled=true
+# spring.h2.console.path=/h2-console
+
+# --- JWT ---
+# Zmien na wlasny losowy ciag (min. 64 znaki Base64).
+app.jwtSecret=CHANGE_ME_TO_RANDOM_BASE64_STRING_AT_LEAST_64_CHARACTERS_LONG_HERE
+app.jwtExpirationMs=86400000
