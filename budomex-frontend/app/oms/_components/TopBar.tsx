@@ -1,7 +1,7 @@
 "use client";
 
-import Icon from "./Icon";
 import UserMenu from "./UserMenu";
+import LiveStatus from "./LiveStatus";
 import TopBarSearch from "../manager/_components/TopBarSearch";
 import NotificationsMenu from "../manager/_components/NotificationsMenu";
 import type { Role } from "./OmsShell";
@@ -52,40 +52,14 @@ export default function TopBar({
       {role === "manager" ? (
         <TopBarSearch placeholder={meta.searchPlaceholder} />
       ) : (
-        <div
-          className="search"
-          onClick={(e) => {
-            e.currentTarget.querySelector("input")?.focus();
-          }}
-        >
-          <Icon name="search" size={14} />
-          <input
-            type="text"
-            placeholder={meta.searchPlaceholder}
-            aria-label="Wyszukiwanie"
-          />
-        </div>
+        <div className="tb-spacer-left" />
       )}
 
       <div className="tb-spacer" />
 
-      <div className="live-status" aria-label="Status połączenia">
-        <span className="live-dot" />
-        <span>System aktywny</span>
-      </div>
+      <LiveStatus role={role} />
 
-      {role === "manager" ? (
-        <NotificationsMenu />
-      ) : (
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label="Powiadomienia"
-          title="Powiadomienia"
-        >
-          <Icon name="bell" size={17} />
-        </button>
-      )}
+      {role === "manager" && <NotificationsMenu />}
 
       <UserMenu
         user={user}

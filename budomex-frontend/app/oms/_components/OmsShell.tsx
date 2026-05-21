@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { getToken } from "@/lib/api";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import RealtimeBridge from "./RealtimeBridge";
 
 type Theme = "light" | "dark";
 export type Role = "manager" | "worker";
@@ -64,6 +66,10 @@ export default function OmsShell({
 
   return (
     <div className={`oms-shell role-${role}`}>
+      <RealtimeBridge token={getToken()} />
+      <a href="#oms-main" className="skip-link">
+        Przejdź do treści głównej
+      </a>
       <Sidebar role={role} />
       <div className="main">
         <TopBar
@@ -76,7 +82,9 @@ export default function OmsShell({
             router.replace("/login");
           }}
         />
-        <main className="content">{children}</main>
+        <main className="content" id="oms-main" tabIndex={-1}>
+          {children}
+        </main>
       </div>
     </div>
   );

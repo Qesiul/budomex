@@ -80,6 +80,11 @@ const ICON_FOR: Record<NotifKind, OmsIconName> = {
   install: "truck",
 };
 
+const GROUP_LABEL: Record<NotifKind, string> = {
+  quote: "Do wyceny",
+  install: "Do montażu",
+};
+
 export default function NotificationsMenu() {
   const { data } = useOrders();
   const [open, setOpen] = useState(false);
@@ -130,21 +135,29 @@ export default function NotificationsMenu() {
   const totalCount = notifications.length;
   const unseenCount = notifications.filter((n) => !seen.has(n.id)).length;
 
-  const handleOpen = () => {
-    setOpen((prev) => {
-      const next = !prev;
-      if (next && unseenCount > 0) {
-        // mark all current as seen on open
-        const merged = new Set(seen);
-        notifications.forEach((n) => merged.add(n.id));
-        writeSeen(merged);
-        setSeen(merged);
-      }
-      return next;
-    });
+  const grouped = useMemo(() => {
+    const map: Record<NotifKind, Notif[]> = { quote: [], install: [] };
+    for (const n of notifications) {
+      map[n.kind].push(n);
+    }
+    return map;
+  }, [notifications]);
+
+  const markAllSeen = () => {
+    const merged = new Set(seen);
+    notifications.forEach((n) => merged.add(n.id));
+    writeSeen(merged);
+    setSeen(merged);
   };
 
-  const openOrder = (orderId: number) => {
+  const openOrder = (notifId: string, orderId: number) => {
+    // Mark only this notification as seen
+    if (!seen.has(notifId)) {
+      const next = new Set(seen);
+      next.add(notifId);
+      writeSeen(next);
+      setSeen(next);
+    }
     setDetailId(orderId);
     setOpen(false);
   };
@@ -159,14 +172,24 @@ export default function NotificationsMenu() {
           title="Powiadomienia"
           aria-haspopup="menu"
           aria-expanded={open}
-          onClick={handleOpen}
+          onClick={() => setOpen((v) => !v)}
         >
           <Icon name="bell" size={17} />
-          {unseenCount > 0 && <span className="bell-dot" />}
+          {unseenCount > 0 && (
+            <>
+              <span className="bell-dot" aria-hidden="true" />
+              <span className="sr-only">{unseenCount} nowych powiadomień</span>
+            </>
+          )}
         </button>
 
         {open && (
-          <div className="notif-pop" role="menu">
+          <div
+            className="notif-pop"
+            role="menu"
+            aria-orientation="vertical"
+            aria-label="Powiadomienia"
+          >
             <div className="notif-head">
               <span className="title">Powiadomienia</span>
               {totalCount > 0 && <span className="count">{totalCount}</span>}
@@ -177,33 +200,70 @@ export default function NotificationsMenu() {
                 Brak nowych powiadomień. Wszystko pod kontrolą.
               </div>
             ) : (
-              <div className="notif-list">
-                {notifications.map((n) => (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    key={n.id}
-                    className={`notif-item ${n.kind}`}
-                    onClick={() => openOrder(n.orderId)}
-                  >
-                    <div className="notif-icon">
-                      <Icon name={ICON_FOR[n.kind]} size={16} />
-                    </div>
-                    <div className="notif-body">
-                      <div className="notif-title-row">
-                        <span className="notif-ref">{n.ref}</span>
+              <>
+                {(["quote", "install"] as NotifKind[]).map((kind) => {
+                  const items = grouped[kind];
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={kind}>
+                      <div className="notif-group">
+                        <span>
+                          {GROUP_LABEL[kind]} ({items.length})
+                        </span>
                       </div>
-                      <div className="notif-title">{n.title}</div>
-                      <div className="notif-desc">{n.desc}</div>
-                      <div className="notif-time">{n.time}</div>
+                      <div className="notif-list">
+                        {items.map((n) => {
+                          const isUnseen = !seen.has(n.id);
+                          return (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              key={n.id}
+                              className={`notif-item ${n.kind} ${isUnseen ? "unseen" : ""}`}
+                              onClick={() => openOrder(n.id, n.orderId)}
+                            >
+                              <div className="notif-icon">
+                                <Icon name={ICON_FOR[n.kind]} size={16} />
+                              </div>
+                              <div className="notif-body">
+                                <div className="notif-title-row">
+                                  <span className="notif-ref">{n.ref}</span>
+                                </div>
+                                <div className="notif-title">{n.title}</div>
+                                <div className="notif-desc">{n.desc}</div>
+                                <div className="notif-time">{n.time}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </button>
-                ))}
-              </div>
+                  );
+                })}
+              </>
             )}
 
-            <div className="notif-foot">
-              Klik powiadomienia · otwórz zamówienie
+            <div
+              className="notif-foot"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>Klik powiadomienia · otwórz zamówienie</span>
+              {notifications.length > 0 && (
+                <button
+                  type="button"
+                  className="notif-mark-all"
+                  onClick={markAllSeen}
+                  disabled={unseenCount === 0}
+                >
+                  {unseenCount === 0
+                    ? "Wszystkie przeczytane"
+                    : "Oznacz wszystkie"}
+                </button>
+              )}
             </div>
           </div>
         )}

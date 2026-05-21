@@ -72,7 +72,7 @@ export default function AcceptancePanel({ token }: Props) {
         <OrderTopNav />
         <main className="order-main">
           <div className="order-content">
-            <div className="order-error">
+            <div className="order-error" role="alert">
               <div className="icon-wrap">
                 <Icon name="alert-circle" size={18} />
               </div>
@@ -358,7 +358,7 @@ export default function AcceptancePanel({ token }: Props) {
           </div>
 
           {actionError && (
-            <div className="order-error" style={{ marginTop: 20 }}>
+            <div className="order-error" role="alert" style={{ marginTop: 20 }}>
               <div className="icon-wrap">
                 <Icon name="alert-circle" size={18} />
               </div>

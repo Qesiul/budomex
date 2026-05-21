@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import Icon from "../../_components/Icon";
 import { useWorkers } from "../_hooks/useWorkers";
 import { useOrders } from "../_hooks/useOrders";
 import { workerColor, workerInitials } from "./_data";
+import { SkeletonAvatars } from "./SkeletonRow";
 
 function loadClass(pct: number): string {
   if (pct >= 70) return "high";
@@ -64,7 +66,11 @@ export default function WorkerLoad() {
   }, [workers, activePerWorker]);
 
   return (
-    <div className="card">
+    <div
+      className="card"
+      aria-busy={isLoading || undefined}
+      aria-live="polite"
+    >
       <div className="card-head">
         <div className="card-head-left">
           <h3 className="card-title">Obciążenie zespołu</h3>
@@ -80,6 +86,7 @@ export default function WorkerLoad() {
 
       {error && (
         <div
+          role="alert"
           style={{
             padding: "16px 20px",
             color: "var(--bdx-danger)",
@@ -87,6 +94,13 @@ export default function WorkerLoad() {
           }}
         >
           Nie udało się pobrać pracowników.
+        </div>
+      )}
+
+      {!error && isLoading && (
+        <div className="wl-list">
+          <span className="sr-only">Ładuję pracowników…</span>
+          <SkeletonAvatars count={4} />
         </div>
       )}
 
@@ -115,9 +129,15 @@ export default function WorkerLoad() {
           const label =
             capacity === 0
               ? "wolny"
-              : `${active} / ${capacity} aktywne`;
+              : active === 0
+                ? "brak przypisań"
+                : `${active} ${active === 1 ? "zlecenie" : active < 5 ? "zlecenia" : "zleceń"}`;
+          const tooltipLabel =
+            capacity === 0
+              ? "Brak aktywnej produkcji w firmie."
+              : `Pracownik przypisany do ${active} z ${capacity} zamówień aktualnie w realizacji.`;
           return (
-            <div className="wl-item" key={w.id}>
+            <div className="wl-item" key={w.id} title={tooltipLabel}>
               <div className={`wl-avatar c-${workerColor(w.id)}`}>
                 {initials}
               </div>
@@ -139,10 +159,10 @@ export default function WorkerLoad() {
       </div>
 
       <div className="card-foot" style={{ justifyContent: "flex-end" }}>
-        <button type="button" className="card-action-link">
+        <Link href="/oms/manager/workers" className="card-action-link">
           Zarządzaj pracownikami
           <Icon name="arrow-right" size={12} />
-        </button>
+        </Link>
       </div>
     </div>
   );

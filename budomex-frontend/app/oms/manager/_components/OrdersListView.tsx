@@ -17,6 +17,8 @@ import { formatPrice, formatShortDate } from "@/lib/format";
 import OrderDetailModal from "./OrderDetailModal";
 import QuoteModal from "./QuoteModal";
 import { invalidateInventory, invalidateOrders } from "../_lib/mutations";
+import { useToast } from "@/lib/toast";
+import { SkeletonRows } from "./SkeletonRow";
 
 type Props = {
   /** Statusy, które mają być pokazane. Undefined → wszystkie. */
@@ -100,28 +102,73 @@ export default function OrdersListView({
   emptyLabel = "Brak zamówień spełniających kryteria.",
 }: Props) {
   const { data, error, isLoading } = useOrders();
+  const toast = useToast();
   const [detailId, setDetailId] = useState<number | null>(null);
   const [quoteOrder, setQuoteOrder] = useState<BackendOrder | null>(null);
+  const [sort, setSort] = useState<{
+    key: "date" | "deadline" | "customer" | "price";
+    dir: "asc" | "desc";
+  }>({ key: "date", dir: "desc" });
+
+  const toggleSort = (key: typeof sort.key) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: key === "customer" ? "asc" : "desc" },
+    );
+  };
 
   const filtered = useMemo(() => {
     const all = data?.orders ?? [];
     const list = statuses
       ? all.filter((o) => statuses.includes(o.status as BackendOrderStatus))
       : all;
-    return list
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.submissionDate).getTime() -
-          new Date(a.submissionDate).getTime(),
-      );
-  }, [data, statuses]);
+    const sorted = list.slice().sort((a, b) => {
+      const dir = sort.dir === "asc" ? 1 : -1;
+      switch (sort.key) {
+        case "customer":
+          return a.customerName.localeCompare(b.customerName, "pl") * dir;
+        case "deadline": {
+          const da = a.estimatedDeliveryDate
+            ? new Date(a.estimatedDeliveryDate).getTime()
+            : Infinity;
+          const db = b.estimatedDeliveryDate
+            ? new Date(b.estimatedDeliveryDate).getTime()
+            : Infinity;
+          return (da - db) * dir;
+        }
+        case "price": {
+          const pa = a.price ?? -Infinity;
+          const pb = b.price ?? -Infinity;
+          return (Number(pa) - Number(pb)) * dir;
+        }
+        case "date":
+        default:
+          return (
+            (new Date(a.submissionDate).getTime() -
+              new Date(b.submissionDate).getTime()) *
+            dir
+          );
+      }
+    });
+    return sorted;
+  }, [data, statuses, sort]);
+
+  const sortIndicator = (key: typeof sort.key) => {
+    if (sort.key !== key) return null;
+    return sort.dir === "asc" ? " ↑" : " ↓";
+  };
 
   return (
     <>
-      <div className="card">
+      <div
+        className="card"
+        aria-busy={isLoading || undefined}
+        aria-live="polite"
+      >
         {error && (
           <div
+            role="alert"
             style={{
               padding: "16px 20px",
               color: "var(--bdx-danger)",
@@ -133,17 +180,10 @@ export default function OrdersListView({
         )}
 
         {!error && isLoading && (
-          <div
-            style={{
-              padding: "32px 20px",
-              color: "var(--text-dim)",
-              fontSize: 13,
-              fontStyle: "italic",
-              textAlign: "center",
-            }}
-          >
-            Ładuję listę zamówień…
-          </div>
+          <>
+            <span className="sr-only">Ładuję listę zamówień…</span>
+            <SkeletonRows count={6} />
+          </>
         )}
 
         {!error && !isLoading && filtered.length === 0 && (
@@ -175,13 +215,86 @@ export default function OrdersListView({
               </colgroup>
               <thead>
                 <tr>
-                  <th>Numer</th>
-                  <th>Klient</th>
+                  <th
+                    className="sortable"
+                    aria-sort={
+                      sort.key === "date"
+                        ? sort.dir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                  >
+                    <button
+                      type="button"
+                      className="th-sort-btn"
+                      onClick={() => toggleSort("date")}
+                      title="Sortuj po dacie zgłoszenia"
+                    >
+                      Numer{sortIndicator("date")}
+                    </button>
+                  </th>
+                  <th
+                    className="sortable"
+                    aria-sort={
+                      sort.key === "customer"
+                        ? sort.dir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                  >
+                    <button
+                      type="button"
+                      className="th-sort-btn"
+                      onClick={() => toggleSort("customer")}
+                      title="Sortuj po nazwisku klienta"
+                    >
+                      Klient{sortIndicator("customer")}
+                    </button>
+                  </th>
                   <th>Typ</th>
                   <th>Status</th>
-                  <th>Termin</th>
+                  <th
+                    className="sortable"
+                    aria-sort={
+                      sort.key === "deadline"
+                        ? sort.dir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                  >
+                    <button
+                      type="button"
+                      className="th-sort-btn"
+                      onClick={() => toggleSort("deadline")}
+                      title="Sortuj po terminie realizacji"
+                    >
+                      Termin{sortIndicator("deadline")}
+                    </button>
+                  </th>
                   <th>Zespół</th>
-                  <th style={{ textAlign: "right" }}>Wartość</th>
+                  <th
+                    className="sortable"
+                    style={{ textAlign: "right" }}
+                    aria-sort={
+                      sort.key === "price"
+                        ? sort.dir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                  >
+                    <button
+                      type="button"
+                      className="th-sort-btn"
+                      onClick={() => toggleSort("price")}
+                      title="Sortuj po wartości"
+                    >
+                      Wartość{sortIndicator("price")}
+                    </button>
+                  </th>
                   <th />
                 </tr>
               </thead>
@@ -248,14 +361,14 @@ export default function OrdersListView({
                         ) : (
                           <button
                             type="button"
-                            className="row-action"
+                            className="row-action always"
                             aria-label="Otwórz szczegóły"
                             onClick={(e) => {
                               e.stopPropagation();
                               setDetailId(o.id);
                             }}
                           >
-                            <Icon name="more-horizontal" size={14} />
+                            <Icon name="chevron-right" size={14} />
                           </button>
                         )}
                       </td>
@@ -280,9 +393,14 @@ export default function OrdersListView({
           order={quoteOrder}
           onClose={() => setQuoteOrder(null)}
           onApproved={() => {
+            const closed = quoteOrder;
             setQuoteOrder(null);
             invalidateOrders();
             invalidateInventory();
+            toast.success(
+              "Wycena zatwierdzona",
+              `${formatRef(closed.id)} · ${closed.customerName} — link akceptacyjny dostępny w konsoli.`,
+            );
           }}
         />
       )}

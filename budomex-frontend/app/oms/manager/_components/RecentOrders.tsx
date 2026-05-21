@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import Icon from "../../_components/Icon";
 import { useOrders, type BackendOrder } from "../_hooks/useOrders";
 import {
@@ -15,6 +16,7 @@ import {
 } from "./_data";
 import { formatPrice, formatShortDate } from "@/lib/format";
 import OrderDetailModal from "./OrderDetailModal";
+import { SkeletonRows } from "./SkeletonRow";
 
 function StatusBadge({ status }: { status: string }) {
   const meta = BACKEND_STATUS_MAP[status as BackendOrderStatus] ?? {
@@ -107,7 +109,11 @@ export default function RecentOrders() {
 
   return (
     <>
-      <div className="card">
+      <div
+        className="card"
+        aria-busy={isLoading || undefined}
+        aria-live="polite"
+      >
         <div className="card-head">
           <div className="card-head-left">
             <h3 className="card-title">Ostatnie zamówienia</h3>
@@ -115,13 +121,14 @@ export default function RecentOrders() {
               {isLoading ? "…" : `${sorted.length} z ${data?.orders.length ?? 0}`}
             </span>
           </div>
-          <button type="button" className="card-action-link">
+          <Link href="/oms/manager/orders" className="card-action-link">
             Zobacz wszystkie
             <Icon name="arrow-right" size={12} />
-          </button>
+          </Link>
         </div>
         {error && (
           <div
+            role="alert"
             style={{
               padding: "16px 20px",
               color: "var(--bdx-danger)",
@@ -131,6 +138,13 @@ export default function RecentOrders() {
             Nie udało się pobrać listy zamówień.
           </div>
         )}
+        {!error && isLoading && (
+          <>
+            <span className="sr-only">Ładuję listę zamówień…</span>
+            <SkeletonRows count={5} />
+          </>
+        )}
+
         {!error && !isLoading && sorted.length === 0 && (
           <div
             style={{
@@ -219,14 +233,14 @@ export default function RecentOrders() {
                       <td>
                         <button
                           type="button"
-                          className="row-action"
+                          className="row-action always"
                           aria-label="Otwórz szczegóły"
                           onClick={(e) => {
                             e.stopPropagation();
                             setDetailId(o.id);
                           }}
                         >
-                          <Icon name="more-horizontal" size={14} />
+                          <Icon name="chevron-right" size={14} />
                         </button>
                       </td>
                     </tr>

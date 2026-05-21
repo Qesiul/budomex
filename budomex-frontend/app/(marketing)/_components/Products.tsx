@@ -14,31 +14,31 @@ type Product = {
 export const PRODUCTS: Product[] = [
   {
     key: "okna",
-    icon: "product-window",
+    icon: "grid-2x2",
     name: "Okna",
     desc: "PCV, aluminium i drewno. Trzyszybowe standardem, ciepły montaż w cenie.",
   },
   {
     key: "drzwi",
-    icon: "product-door",
+    icon: "door-closed",
     name: "Drzwi",
     desc: "Wejściowe stalowe lub drewniane, drzwi wewnętrzne na wymiar.",
   },
   {
     key: "bramy",
-    icon: "product-gate",
+    icon: "warehouse",
     name: "Bramy",
     desc: "Garażowe segmentowe i wjazdowe. Z napędem, pilotem i fotokomórką.",
   },
   {
     key: "rolety",
-    icon: "product-roller-shutter",
+    icon: "blinds",
     name: "Rolety",
-    desc: "Zewnętrzne nakładane oraz podtynkowe — sterowanie ręczne lub elektryczne.",
+    desc: "Zewnętrzne nakładane oraz podtynkowe - sterowanie ręczne lub elektryczne.",
   },
   {
     key: "parapety",
-    icon: "product-parapet",
+    icon: "panel-bottom",
     name: "Parapety",
     desc: "Wewnętrzne PCV, konglomerat i kamień. Zewnętrzne stalowe i aluminium.",
   },
@@ -50,7 +50,7 @@ type Props = {
 
 export default function Products({ onAsk }: Props) {
   return (
-    <section className="section paper-2" id="oferta">
+    <section className="section" id="oferta">
       <div className="container">
         <div className="section-head">
           <div className="eyebrow">Co produkujemy</div>
@@ -58,7 +58,7 @@ export default function Products({ onAsk }: Props) {
             Pięć rzeczy, na których zależy ci najbardziej w&nbsp;twoim domu.
           </h2>
           <p className="sub">
-            Nie udajemy, że robimy wszystko. Stolarka otworowa — okna, drzwi,
+            Nie udajemy, że robimy wszystko. Stolarka otworowa - okna, drzwi,
             bramy, rolety, parapety. Materiał z&nbsp;własnego zakładu, montaż
             przez nasz zespół.
           </p>

@@ -20,6 +20,8 @@ import {
 } from "@/lib/format";
 import InstallScheduleModal from "./InstallScheduleModal";
 import OrderDetailModal from "./OrderDetailModal";
+import ConfirmDialog from "../../_components/ConfirmDialog";
+import { useToast } from "@/lib/toast";
 
 function isOverdueInstallation(o: BackendOrder): boolean {
   if (o.status !== "MONTAZ" || !o.installationDate) return false;
@@ -67,10 +69,11 @@ type ModalState =
 
 export default function InstallPanel() {
   const { data, error, isLoading } = useOrders();
+  const toast = useToast();
   const [modal, setModal] = useState<ModalState>(null);
   const [detailId, setDetailId] = useState<number | null>(null);
   const [completing, setCompleting] = useState<number | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [confirmOrder, setConfirmOrder] = useState<BackendOrder | null>(null);
 
   const { ready, scheduled } = useMemo(() => {
     const all = data?.orders ?? [];
@@ -98,20 +101,24 @@ export default function InstallPanel() {
 
   const overdueCount = scheduled.filter(isOverdueInstallation).length;
 
-  const completeInstallation = async (orderId: number) => {
-    setErrorMsg(null);
-    setCompleting(orderId);
+  const completeInstallation = async (order: BackendOrder) => {
+    setCompleting(order.id);
     try {
-      await api(`/api/manager/order/${orderId}/complete-installation`, {
+      await api(`/api/manager/order/${order.id}/complete-installation`, {
         method: "POST",
       });
       await invalidateOrders();
+      toast.success(
+        "Montaż zakończony",
+        `Zamówienie ${formatRef(order.id)} (${order.customerName}) trafiło do archiwum.`,
+      );
+      setConfirmOrder(null);
     } catch (err) {
-      if (err instanceof ApiError) {
-        setErrorMsg(err.message || `Błąd ${err.status}`);
-      } else {
-        setErrorMsg("Nie udało się zakończyć montażu.");
-      }
+      const msg =
+        err instanceof ApiError
+          ? err.message || `Błąd ${err.status}`
+          : "Nie udało się zakończyć montażu.";
+      toast.error("Nie udało się zakończyć montażu", msg);
     } finally {
       setCompleting(null);
     }
@@ -121,6 +128,7 @@ export default function InstallPanel() {
     <>
       <header className="content-header">
         <div>
+          <div className="content-crumb">OMS · Montaż</div>
           <h1 className="content-title">Montaż</h1>
           <p className="content-sub">
             {isLoading
@@ -131,26 +139,6 @@ export default function InstallPanel() {
           </p>
         </div>
       </header>
-
-      {errorMsg && (
-        <div
-          style={{
-            marginBottom: 16,
-            padding: "10px 14px",
-            background: "var(--bdx-danger-tint)",
-            border: "1px solid var(--bdx-danger)",
-            borderRadius: 6,
-            color: "var(--bdx-danger)",
-            fontSize: 13,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <Icon name="alert-circle" size={14} />
-          <span>{errorMsg}</span>
-        </div>
-      )}
 
       {error && (
         <div className="card" style={{ marginBottom: 16 }}>
@@ -166,18 +154,30 @@ export default function InstallPanel() {
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div
+        className={`card ${ready.length > 0 ? "install-card-primary" : ""}`}
+        style={{ marginBottom: 16 }}
+      >
         <div className="card-head">
           <div className="card-head-left">
             <h3
-              className="card-title"
-              style={ready.length > 0 ? { color: "var(--bdx-success)" } : undefined}
+              className={`card-title ${ready.length > 0 ? "card-title-alert" : ""}`}
+              style={ready.length > 0 ? { color: "var(--accent)" } : undefined}
             >
+              {ready.length > 0 && (
+                <span className="alert-mark" aria-hidden="true">
+                  <Icon name="zap" size={12} strokeWidth={2.5} />
+                </span>
+              )}
               Gotowe do montażu
             </h3>
           </div>
           <span className="card-sub">
-            {isLoading ? "…" : `${ready.length} zamówień`}
+            {isLoading
+              ? "…"
+              : ready.length === 0
+                ? "brak akcji"
+                : `${ready.length} ${ready.length === 1 ? "zamówienie wymaga akcji" : "zamówień wymaga akcji"}`}
           </span>
         </div>
 
@@ -382,10 +382,10 @@ export default function InstallPanel() {
                           <button
                             type="button"
                             className="btn sm"
-                            onClick={() => completeInstallation(o.id)}
+                            onClick={() => setConfirmOrder(o)}
                             disabled={isCompleting}
                           >
-                            {isCompleting ? "Kończę…" : "Zakończ montaż"}
+                            Zakończ montaż
                           </button>
                         </div>
                       </td>
@@ -403,7 +403,15 @@ export default function InstallPanel() {
           order={modal.order}
           mode={modal.kind}
           onClose={() => setModal(null)}
-          onDone={() => setModal(null)}
+          onDone={() => {
+            toast.success(
+              modal.kind === "schedule"
+                ? "Montaż zaplanowany"
+                : "Termin montażu zaktualizowany",
+              `${formatRef(modal.order.id)} · ${modal.order.customerName}`,
+            );
+            setModal(null);
+          }}
         />
       )}
 
@@ -413,6 +421,23 @@ export default function InstallPanel() {
           onClose={() => setDetailId(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmOrder !== null}
+        title="Zakończyć montaż?"
+        description={
+          confirmOrder
+            ? `Zamówienie ${formatRef(confirmOrder.id)} dla ${confirmOrder.customerName} zostanie oznaczone jako zakończone i przeniesione do archiwum. Tej akcji nie można cofnąć.`
+            : ""
+        }
+        confirmLabel="Zakończ montaż"
+        cancelLabel="Anuluj"
+        danger
+        icon="check-circle"
+        busy={completing !== null}
+        onConfirm={() => confirmOrder && completeInstallation(confirmOrder)}
+        onCancel={() => setConfirmOrder(null)}
+      />
     </>
   );
 }

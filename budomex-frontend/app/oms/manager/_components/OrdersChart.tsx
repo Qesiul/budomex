@@ -163,12 +163,19 @@ export default function OrdersChart() {
             viewBox={`0 0 ${W} ${H}`}
             preserveAspectRatio="none"
             role="img"
-            aria-label={
-              mode === "count"
-                ? "Wykres liczby zamówień miesięcznie"
-                : "Wykres wartości zamówień miesięcznie"
-            }
+            aria-labelledby="chart-title"
+            aria-describedby="chart-desc"
           >
+            <title id="chart-title">
+              {mode === "count"
+                ? "Wykres liczby zamówień miesięcznie"
+                : "Wykres wartości zamówień miesięcznie"}
+            </title>
+            <desc id="chart-desc">
+              {mode === "count"
+                ? `Liczba zamówień w ciągu ostatnich 12 miesięcy. Suma: ${data.reduce((s, d) => s + d.count, 0)}. Najwięcej: ${Math.max(...data.map((d) => d.count))} w miesiącu ${data.find((d) => d.count === Math.max(...data.map((x) => x.count)))?.month ?? "—"}.`
+                : `Wartość wycenionych zamówień w ciągu ostatnich 12 miesięcy. Suma: ${data.reduce((s, d) => s + d.value, 0)} zł.`}
+            </desc>
             {tickVals.map((t, i) => {
               const y = padding.top + innerH - (t / niceMax) * innerH;
               return (

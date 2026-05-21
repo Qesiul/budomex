@@ -31,11 +31,19 @@ export type IconName =
   | "tool"
   | "trending-up"
   | "wifi"
-  | "product-window"
-  | "product-door"
-  | "product-gate"
-  | "product-roller-shutter"
-  | "product-parapet"
+  | "grid-2x2"
+  | "door-closed"
+  | "warehouse"
+  | "blinds"
+  | "panel-bottom"
+  | "send"
+  | "mail-check"
+  | "factory"
+  | "hard-hat"
+  | "radio"
+  | "users-round"
+  | "badge-check"
+  | "smile"
   | "refresh-cw"
   | "rotate-cw";
 
@@ -45,8 +53,8 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   mail: (
     <>
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-      <polyline points="22,6 12,13 2,6" />
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
     </>
   ),
   "arrow-right": (
@@ -67,7 +75,7 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   "map-pin": (
     <>
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
       <circle cx="12" cy="10" r="3" />
     </>
   ),
@@ -181,44 +189,103 @@ const PATHS: Record<IconName, ReactNode> = {
       <line x1="12" y1="20" x2="12.01" y2="20" />
     </>
   ),
-  /* ---- Product icons (custom, 24px viewBox, 1.5px stroke) ---- */
-  "product-window": (
+  /* ---- Product icons (Lucide) ---- */
+  "grid-2x2": (
     <>
-      <rect x="3" y="3" width="18" height="18" rx="1" />
-      <line x1="12" y1="3" x2="12" y2="21" />
-      <line x1="3" y1="12" x2="21" y2="12" />
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M3 12h18" />
+      <path d="M12 3v18" />
     </>
   ),
-  "product-door": (
+  "door-closed": (
     <>
-      <path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17" />
-      <line x1="3" y1="21" x2="21" y2="21" />
-      <circle cx="15" cy="13" r="0.8" />
+      <path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14" />
+      <path d="M2 20h20" />
+      <path d="M14 12v.01" />
     </>
   ),
-  "product-gate": (
+  warehouse: (
     <>
-      <rect x="3" y="6" width="18" height="14" rx="1" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-      <line x1="3" y1="14" x2="21" y2="14" />
-      <line x1="3" y1="18" x2="21" y2="18" />
+      <path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z" />
+      <path d="M6 18h12" />
+      <path d="M6 14h12" />
+      <rect width="12" height="12" x="6" y="10" />
     </>
   ),
-  "product-roller-shutter": (
+  blinds: (
     <>
-      <rect x="3" y="3" width="18" height="18" rx="1" />
-      <line x1="3" y1="8" x2="21" y2="8" />
-      <line x1="3" y1="11" x2="21" y2="11" />
-      <line x1="3" y1="14" x2="21" y2="14" />
-      <line x1="3" y1="17" x2="21" y2="17" />
+      <path d="M3 3h18" />
+      <path d="M20 7H8" />
+      <path d="M20 11H8" />
+      <path d="M10 19h10" />
+      <path d="M8 15h12" />
+      <path d="M4 3v14" />
+      <circle cx="4" cy="19" r="2" />
     </>
   ),
-  "product-parapet": (
+  "panel-bottom": (
     <>
-      <path d="M2 10h20" />
-      <path d="M3 10v4a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-4" />
-      <line x1="6" y1="15" x2="6" y2="20" />
-      <line x1="18" y1="15" x2="18" y2="20" />
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M3 15h18" />
+    </>
+  ),
+  send: (
+    <>
+      <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
+      <path d="m21.854 2.147-10.94 10.939" />
+    </>
+  ),
+  "mail-check": (
+    <>
+      <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      <path d="m16 19 2 2 4-4" />
+    </>
+  ),
+  factory: (
+    <>
+      <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z" />
+      <path d="M17 18h1" />
+      <path d="M12 18h1" />
+      <path d="M7 18h1" />
+    </>
+  ),
+  "hard-hat": (
+    <>
+      <path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z" />
+      <path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" />
+      <path d="M4 15v-3a6 6 0 0 1 6-6" />
+      <path d="M14 6a6 6 0 0 1 6 6v3" />
+    </>
+  ),
+  radio: (
+    <>
+      <path d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+      <path d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+      <path d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+      <path d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+      <circle cx="12" cy="12" r="2" />
+    </>
+  ),
+  "users-round": (
+    <>
+      <path d="M18 21a8 8 0 0 0-16 0" />
+      <circle cx="10" cy="8" r="5" />
+      <path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3" />
+    </>
+  ),
+  "badge-check": (
+    <>
+      <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  smile: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+      <line x1="9" y1="9" x2="9.01" y2="9" />
+      <line x1="15" y1="9" x2="15.01" y2="9" />
     </>
   ),
   "refresh-cw": (

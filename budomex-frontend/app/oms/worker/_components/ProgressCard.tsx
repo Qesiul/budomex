@@ -24,6 +24,16 @@ export default function ProgressCard({ done, total, syncing }: Props) {
     const start = prevPctRef.current;
     const target = pct;
     if (start === target) return;
+
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) {
+      setDisplayPct(target);
+      prevPctRef.current = target;
+      return;
+    }
+
     const startTime = performance.now();
     const dur = 600;
     let raf = 0;
@@ -37,15 +47,6 @@ export default function ProgressCard({ done, total, syncing }: Props) {
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [pct]);
-
-  const estimate =
-    remaining === 0
-      ? "gotowe"
-      : remaining <= 3
-        ? "1–2h"
-        : remaining <= 6
-          ? "3–5h"
-          : "5–8h";
 
   return (
     <div className="progress-card">
@@ -68,7 +69,13 @@ export default function ProgressCard({ done, total, syncing }: Props) {
             />
           </svg>
           <div className="progress-ring-center">
-            <div className="progress-ring-pct">{displayPct}%</div>
+            <div
+              className="progress-ring-pct"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {displayPct}%
+            </div>
             <div className="progress-ring-label">postęp</div>
           </div>
         </div>
@@ -81,14 +88,14 @@ export default function ProgressCard({ done, total, syncing }: Props) {
             </div>
           </div>
           <div className="ps-row">
-            <div className="ps-label">Pozostało</div>
+            <div className="ps-label">Status</div>
             <div className="ps-value">
-              {remaining} <span className="sub">zadań</span>
+              {remaining === 0
+                ? "gotowe"
+                : remaining === total
+                  ? "do startu"
+                  : "w toku"}
             </div>
-          </div>
-          <div className="ps-row">
-            <div className="ps-label">Szacowany czas</div>
-            <div className="ps-value">{estimate}</div>
           </div>
         </div>
       </div>
@@ -96,9 +103,9 @@ export default function ProgressCard({ done, total, syncing }: Props) {
       <div className={`progress-sync ${syncing ? "syncing" : ""}`}>
         <Icon name={syncing ? "refresh-cw" : "check-circle"} size={14} />
         <span>
-          Postęp aktualizowany w czasie rzeczywistym
-          <span style={{ margin: "0 6px", color: "var(--text-faint)" }}>·</span>
-          {syncing ? "Synchronizacja…" : "Ostatnia synchronizacja przed chwilą"}
+          {syncing
+            ? "Synchronizacja z serwerem…"
+            : "Dane odświeżane automatycznie co 20 s"}
         </span>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Icon from "../../_components/Icon";
 import { api, ApiError } from "@/lib/api";
 import { PRODUCT_LABELS, formatRef } from "./_data";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 type BackendOrder = {
   id: number;
@@ -54,6 +55,7 @@ export default function QuoteModal({ order, onClose, onApproved }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -147,7 +149,7 @@ export default function QuoteModal({ order, onClose, onApproved }: Props) {
       aria-modal="true"
       aria-label={isSuccess ? "Wycena zaakceptowana" : "Wyceń zamówienie"}
     >
-      <div className="qm-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={trapRef} className="qm-modal" onClick={(e) => e.stopPropagation()}>
         {isSuccess ? (
           <div className="qm-success">
             <div className="qm-success-head">

@@ -1,14 +1,21 @@
 import Icon from "../../_components/Icon";
-import type { CurrentOrder } from "./_data";
+import {
+  PRODUCT_LABELS,
+  formatRef,
+} from "../../manager/_components/_data";
+import { formatLongDate } from "@/lib/format";
+import type { WorkerOrderDetail } from "../_hooks/useWorkerOrderDetail";
 
-export default function OrderInfo({ order }: { order: CurrentOrder }) {
+export default function OrderInfo({ order }: { order: WorkerOrderDetail }) {
+  const productLabel = PRODUCT_LABELS[order.productType] ?? order.productType;
+
   return (
     <div className="card">
       <div className="card-head">
         <div className="card-head-left">
           <h3 className="card-title">Szczegóły zamówienia</h3>
         </div>
-        <span className="card-sub">{order.id}</span>
+        <span className="card-sub">{formatRef(order.id)}</span>
       </div>
 
       <div className="rbac-banner" aria-label="Informacja o widoczności danych">
@@ -22,44 +29,32 @@ export default function OrderInfo({ order }: { order: CurrentOrder }) {
       <div className="info-list">
         <div className="info-row">
           <div className="k">Klient</div>
-          <div className="v">{order.client}</div>
+          <div className="v">{order.customerName}</div>
         </div>
         <div className="info-row">
           <div className="k">Typ produktu</div>
-          <div className="v">{order.details.product}</div>
+          <div className="v">{productLabel}</div>
         </div>
         <div className="info-row">
           <div className="k">Ilość</div>
-          <div className="v mono">{order.details.quantity}</div>
+          <div className="v mono">{order.quantity} szt.</div>
         </div>
         <div className="info-row">
-          <div className="k">Wymiary</div>
-          <div className="v mono">{order.details.dimensions}</div>
-        </div>
-        <div className="info-row">
-          <div className="k">Kolor</div>
+          <div className="k">Termin realizacji</div>
           <div className="v">
-            <span
-              className="color-swatch"
-              style={{ background: "#FFFFFF", borderColor: "#D8D2C4" }}
-              aria-hidden="true"
-            />
-            {order.details.color}
+            {order.estimatedDeliveryDate
+              ? formatLongDate(order.estimatedDeliveryDate)
+              : "do uzgodnienia"}
           </div>
         </div>
         <div className="info-row">
-          <div className="k">Materiał</div>
-          <div className="v note">{order.details.material}</div>
-        </div>
-        <div className="info-row">
-          <div className="k">Szkło</div>
-          <div className="v mono" style={{ fontSize: 13 }}>
-            {order.details.glass}
+          <div className="k">Specyfikacja</div>
+          <div
+            className="v note"
+            style={{ whiteSpace: "pre-wrap" }}
+          >
+            {order.productSpecifications || "Brak dodatkowej specyfikacji."}
           </div>
-        </div>
-        <div className="info-row">
-          <div className="k">Uwagi</div>
-          <div className="v note">{order.details.notes}</div>
         </div>
       </div>
     </div>

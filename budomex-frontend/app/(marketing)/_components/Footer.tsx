@@ -14,7 +14,7 @@ export default function Footer() {
         <div className="footer-grid">
           <div>
             <div className="brand-row">
-              <Logo variant="reversed" />
+              <Logo />
             </div>
             <p className="desc">
               Rodzinna firma stolarki otworowej z&nbsp;Bydgoszczy. Robimy okna,
@@ -47,9 +47,9 @@ export default function Footer() {
             <div className="meta-block">
               <div>Budomex Sp. z&nbsp;o.o.</div>
               <div>
-                ul. Fordońska 213
+                ul. Juliusza Kossaka 35
                 <br />
-                85-739 Bydgoszcz
+                85-307 Bydgoszcz
               </div>
               <div className="lab">Dane rejestrowe</div>
               <div>NIP 953 277 41 22</div>
@@ -67,9 +67,10 @@ export default function Footer() {
               <a href="mailto:biuro@budomex.pl" style={{ padding: 0 }}>
                 biuro@budomex.pl
               </a>
+              <div aria-hidden="true">&nbsp;</div>
               <div className="lab">Godziny</div>
-              <div>pon–pt 8:00–17:00</div>
-              <div>sob 9:00–13:00</div>
+              <div>pon-pt 8:00-17:00</div>
+              <div>sob 9:00-13:00</div>
             </div>
           </div>
         </div>

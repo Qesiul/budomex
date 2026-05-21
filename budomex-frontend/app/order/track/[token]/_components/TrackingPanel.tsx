@@ -5,6 +5,7 @@ import OrderTopNav from "../../../_components/OrderTopNav";
 import Icon from "../../../../(marketing)/_components/Icon";
 import { ApiError, fetcher } from "@/lib/api";
 import { formatLongDate, formatOrderRef } from "@/lib/format";
+import { useStomp } from "@/lib/realtime";
 
 type TrackResponse = {
   id: number;
@@ -101,10 +102,15 @@ export default function TrackingPanel({ token }: Props) {
     `/api/order/accept/${token}/track`,
     fetcher,
     {
-      refreshInterval: 10_000,
+      // WebSocket pushuje zmiany w czasie rzeczywistym; polling jako backstop.
+      refreshInterval: 30_000,
       revalidateOnFocus: true,
     },
   );
+
+  // Real-time: backend broadcastuje na /topic/track/{token} przy każdej zmianie
+  // statusu/postępu. Publiczny topic — bez JWT.
+  useStomp([{ topic: `/topic/track/${token}`, onMessage: () => mutate() }]);
 
   if (isLoading) {
     return (
@@ -127,7 +133,7 @@ export default function TrackingPanel({ token }: Props) {
         <OrderTopNav />
         <main className="order-main">
           <div className="order-content">
-            <div className="order-error">
+            <div className="order-error" role="alert">
               <div className="icon-wrap">
                 <Icon name="alert-circle" size={18} />
               </div>
@@ -170,14 +176,18 @@ export default function TrackingPanel({ token }: Props) {
         <div className="order-content">
           <div className="order-eyebrow">Śledzenie · {ref}</div>
 
+          <div className="sr-only" aria-live="polite">
+            Status zamówienia: {pill.label}. Postęp produkcji: {pct}%.
+          </div>
+
           <div className="track-header">
             <div>
               <h1 className="order-h1">
                 {data.quantity}× {productLabel}
               </h1>
               <p className="order-lead">
-                Aktualizacje pojawiają się tu automatycznie — co 10 sekund
-                sprawdzamy, co dzieje się w&nbsp;zakładzie.
+                Status aktualizuje się tu na żywo - bez odświeżania strony,
+                gdy tylko coś zmieni się w&nbsp;zakładzie.
               </p>
             </div>
             <span className={`track-status-pill ${pill.cls}`}>
@@ -215,8 +225,16 @@ export default function TrackingPanel({ token }: Props) {
                 <div className="track-stat-row">
                   <span className="k">Zadania produkcyjne</span>
                   <span className="v">
-                    {data.completedTasks}
-                    <span className="sub">z {data.totalTasks || "—"}</span>
+                    {data.totalTasks > 0 ? (
+                      <>
+                        {data.completedTasks}
+                        <span className="sub">z {data.totalTasks}</span>
+                      </>
+                    ) : (
+                      <span className="sub" style={{ fontSize: 15 }}>
+                        czekają na przypisanie
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="track-stat-row">
@@ -241,7 +259,7 @@ export default function TrackingPanel({ token }: Props) {
             <div className="track-foot">
               <span className="dot" />
               <span>
-                {isValidating ? "Sprawdzam aktualizacje…" : "Na żywo · odświeżamy co 10 s"}
+                {isValidating ? "Sprawdzam aktualizacje…" : "Na żywo · połączono"}
               </span>
               <button
                 type="button"
@@ -316,7 +334,7 @@ export default function TrackingPanel({ token }: Props) {
               <span className="k">Numer referencyjny</span>
               <div className="v mono">{ref}</div>
               <div className="sub">
-                Trzymaj go pod ręką — przyda się, jeśli będziesz dzwonił.
+                Trzymaj go pod ręką - przyda się, jeśli będziesz dzwonił.
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ export default function SettingsPage() {
     <>
       <header className="content-header">
         <div>
+          <div className="content-crumb">OMS · Ustawienia</div>
           <h1 className="content-title">Ustawienia</h1>
           <p className="content-sub">
             Konfiguracja konta, uprawnień i parametrów systemu.

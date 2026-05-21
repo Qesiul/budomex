@@ -35,6 +35,7 @@ export default function ManagerDashboard() {
     <>
       <header className="content-header">
         <div>
+          <div className="content-crumb">OMS · Dashboard</div>
           <h1 className="content-title">Dashboard</h1>
           <p className="content-sub">
             Witaj z powrotem, {firstName}.{" "}

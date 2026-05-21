@@ -2,17 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Logo from "../../(marketing)/_components/Logo";
 import { useAuth, type Role } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
-
-const IS_DEV = process.env.NODE_ENV !== "production";
-
-const TEST_ACCOUNTS: Array<{ role: Role; username: string; password: string; label: string }> = [
-  { role: "manager", username: "manager", password: "manager123", label: "Manager" },
-  { role: "worker", username: "worker", password: "worker123", label: "Pracownik" },
-];
 
 function destinationFor(role: Role): string {
   return role === "manager" ? "/oms/manager" : "/oms/worker";
@@ -26,12 +17,6 @@ export default function LoginForm() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const fillTestAccount = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    setError(null);
-  };
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -61,16 +46,7 @@ export default function LoginForm() {
 
   return (
     <div className="login-card">
-      <div className="login-mark">
-        <Logo />
-        <span className="mark-sub">OMS</span>
-      </div>
-
-      <h2>Otwórz dzień.</h2>
-      <p className="login-lead">
-        Manager lub produkcja — tym samym kontem. Po zalogowaniu zobaczysz panel
-        dopasowany do swojej roli.
-      </p>
+      <h2>Zaloguj się do systemu</h2>
 
       <form className="login-form" onSubmit={onSubmit} noValidate>
         <div className="field">
@@ -82,7 +58,10 @@ export default function LoginForm() {
               id="login-username"
               type="text"
               autoComplete="username"
-              placeholder="np. manager"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="manager"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={submitting}
@@ -111,7 +90,7 @@ export default function LoginForm() {
               className="toggle-pw"
               onClick={() => setShowPw((v) => !v)}
               aria-label={showPw ? "Ukryj hasło" : "Pokaż hasło"}
-              tabIndex={-1}
+              aria-pressed={showPw}
             >
               {showPw ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -158,33 +137,6 @@ export default function LoginForm() {
           )}
         </button>
       </form>
-
-      {IS_DEV && (
-        <div className="login-dev">
-          <div className="login-dev-head">Konta testowe</div>
-          <div className="login-dev-grid">
-            {TEST_ACCOUNTS.map((acc) => (
-              <button
-                key={acc.username}
-                type="button"
-                className="login-dev-chip"
-                onClick={() => fillTestAccount(acc.username, acc.password)}
-              >
-                <span className="chip-role">{acc.label}</span>
-                <span className="chip-creds">
-                  {acc.username} / {acc.password}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="login-foot">
-        <span>Backend: http://localhost:8080</span>
-        <span className="sep">·</span>
-        <Link href="/">Strona główna</Link>
-      </div>
     </div>
   );
 }

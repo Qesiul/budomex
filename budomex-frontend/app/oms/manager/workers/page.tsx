@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Icon from "../../_components/Icon";
 import { useOrders } from "../_hooks/useOrders";
-import { useWorkers } from "../_hooks/useWorkers";
+import { useWorkers, type BackendWorker } from "../_hooks/useWorkers";
 import { workerColor, workerInitials } from "../_components/_data";
+import WorkerDetailModal from "../_components/WorkerDetailModal";
+import { usePageTitle } from "../../_components/usePageTitle";
 
 function loadClass(pct: number): string {
   if (pct >= 70) return "high";
@@ -32,6 +34,8 @@ const WORKLOAD_LABEL: Record<string, string> = {
 export default function WorkersPage() {
   const { data: workers, error, isLoading } = useWorkers();
   const { data: ordersResp } = useOrders();
+  const [selected, setSelected] = useState<BackendWorker | null>(null);
+  usePageTitle("Pracownicy · Budomex OMS");
 
   const capacity = ordersResp?.countWRealizacji ?? 0;
 
@@ -63,6 +67,7 @@ export default function WorkersPage() {
     <>
       <header className="content-header">
         <div>
+          <div className="content-crumb">OMS · Pracownicy</div>
           <h1 className="content-title">Pracownicy</h1>
           <p className="content-sub">
             {isLoading
@@ -131,7 +136,11 @@ export default function WorkersPage() {
                       ? Math.min(100, Math.round((active / capacity) * 100))
                       : 0;
                   return (
-                    <tr key={w.id} style={{ cursor: "default" }}>
+                    <tr
+                      key={w.id}
+                      onClick={() => setSelected(w)}
+                      title="Otwórz profil pracownika"
+                    >
                       <td>
                         <div className={`wl-avatar c-${workerColor(w.id)}`}>
                           {initials}
@@ -211,10 +220,17 @@ export default function WorkersPage() {
             }}
           >
             <Icon name="info" size={12} />
-            Edycja przypisań w szczegółach zamówienia.
+            Klik wiersza — profil pracownika i jego zamówienia.
           </span>
         </div>
       </div>
+
+      {selected && (
+        <WorkerDetailModal
+          worker={selected}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </>
   );
 }

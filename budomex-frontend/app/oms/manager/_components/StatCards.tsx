@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Icon, { type OmsIconName } from "../../_components/Icon";
 import { useOrders } from "../_hooks/useOrders";
 import { useMonthlyStats } from "../_hooks/useMonthlyStats";
@@ -11,31 +12,35 @@ type StatCard = {
   key: string;
   label: string;
   value: number | null;
-  delta: string;
-  trend: Trend;
+  /** Trendowa delta (m/m). Jeśli null — pole "status" zamiast trendu. */
+  delta: { label: string; trend: Trend } | null;
+  /** Tekstowy status (nie delta) — np. "wymagają wyceny". */
+  status: string | null;
   color: StatColor;
   icon: OmsIconName;
   urgent: boolean;
+  href: string;
 };
 
 const trendIcon = (trend: Trend): OmsIconName =>
   trend === "up" ? "trending-up" : trend === "down" ? "trending-down" : "minus";
-const deltaCls = (trend: Trend) =>
+const trendCls = (trend: Trend) =>
   trend === "up" ? "up" : trend === "down" ? "down" : "";
 
 function computeMonthlyDelta(
   monthly: { name: string; zamowienia: number }[] | undefined,
-): { delta: string; trend: Trend } {
-  if (!monthly || monthly.length < 2) return { delta: "—", trend: "flat" };
+): { label: string; trend: Trend } | null {
+  if (!monthly || monthly.length < 2) return null;
   const currentIdx = new Date().getMonth();
   const current = monthly[currentIdx]?.zamowienia ?? 0;
   const prevIdx = (currentIdx + 11) % 12;
   const previous = monthly[prevIdx]?.zamowienia ?? 0;
   const diff = current - previous;
-  if (diff === 0) return { delta: "bez zmian vs poprzedni mies.", trend: "flat" };
+  if (diff === 0)
+    return { label: "bez zmian vs poprzedni mies.", trend: "flat" };
   const sign = diff > 0 ? "+" : "";
   return {
-    delta: `${sign}${diff} vs poprzedni mies.`,
+    label: `${sign}${diff} vs poprzedni mies.`,
     trend: diff > 0 ? "up" : "down",
   };
 }
@@ -58,52 +63,64 @@ export default function StatCards() {
       key: "pending",
       label: "Oczekujące zapytania",
       value: counts.pending,
-      delta: counts.pending && counts.pending > 0 ? "wymagają wyceny" : "—",
-      trend: "flat",
+      delta: null,
+      status:
+        counts.pending && counts.pending > 0
+          ? counts.pending === 1
+            ? "wymaga wyceny"
+            : "wymagają wyceny"
+          : "wszystko wycenione",
       color: "danger",
       icon: "inbox",
       urgent: (counts.pending ?? 0) > 0,
+      href: "/oms/manager/inbox",
     },
     {
       key: "active",
       label: "W realizacji",
       value: counts.active,
-      delta: monthlyDelta.delta,
-      trend: monthlyDelta.trend,
+      delta: monthlyDelta,
+      status: null,
       color: "info",
       icon: "activity",
       urgent: false,
+      href: "/oms/manager/production",
     },
     {
       key: "overdue",
       label: "Przekroczony termin",
       value: counts.overdue,
-      delta: counts.overdue && counts.overdue > 0 ? "wymaga reakcji" : "—",
-      trend: "flat",
+      delta: null,
+      status:
+        counts.overdue && counts.overdue > 0
+          ? "wymaga reakcji"
+          : "brak opóźnień",
       color: "warning",
       icon: "alert-triangle",
       urgent: (counts.overdue ?? 0) > 0,
+      href: "/oms/manager/orders",
     },
     {
       key: "install",
       label: "W montażu",
       value: counts.install,
-      delta: "—",
-      trend: "flat",
+      delta: null,
+      status: counts.install && counts.install > 0 ? "zaplanowane" : "—",
       color: "purple",
       icon: "truck",
       urgent: false,
+      href: "/oms/manager/install",
     },
   ];
 
   return (
     <div className="kpi-grid">
       {cards.map((s) => (
-        <button
+        <Link
           key={s.key}
-          type="button"
+          href={s.href}
           className={`kpi ${s.color}`}
-          aria-label={`${s.label}: ${s.value ?? "ładowanie"}`}
+          aria-label={`${s.label}: ${s.value ?? "ładowanie"}, przejdź do listy`}
         >
           <div className="kpi-head">
             <div className="kpi-label">{s.label}</div>
@@ -114,14 +131,23 @@ export default function StatCards() {
           <div className="kpi-value">
             {s.value == null ? (ordersLoading ? "…" : "—") : s.value}
             {s.urgent && (s.value ?? 0) > 0 && (
-              <span className="pulse-dot" aria-hidden="true" />
+              <>
+                <span className="pulse-dot" aria-hidden="true" />
+                <span className="sr-only">pilne — wymaga uwagi</span>
+              </>
             )}
           </div>
-          <div className={`kpi-delta ${deltaCls(s.trend)}`}>
-            <Icon name={trendIcon(s.trend)} size={11} />
-            <span>{s.delta}</span>
-          </div>
-        </button>
+          {s.delta ? (
+            <div className={`kpi-delta ${trendCls(s.delta.trend)}`}>
+              <Icon name={trendIcon(s.delta.trend)} size={11} />
+              <span>{s.delta.label}</span>
+            </div>
+          ) : (
+            <div className="kpi-status">
+              <span>{s.status ?? "—"}</span>
+            </div>
+          )}
+        </Link>
       ))}
     </div>
   );

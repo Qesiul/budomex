@@ -5,6 +5,7 @@ import Icon from "../../_components/Icon";
 import { api, ApiError } from "@/lib/api";
 import { invalidateOrders } from "../_lib/mutations";
 import { PRODUCT_LABELS, formatRef } from "./_data";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 type Order = {
   id: number;
@@ -55,6 +56,7 @@ export default function InstallScheduleModal({
   const [time, setTime] = useState(initial.time);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -118,7 +120,7 @@ export default function InstallScheduleModal({
       aria-modal="true"
       aria-label={title}
     >
-      <div className="qm-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={trapRef} className="qm-modal" onClick={(e) => e.stopPropagation()}>
         <header className="qm-head">
           <div className="qm-head-text">
             <h3>{title}</h3>

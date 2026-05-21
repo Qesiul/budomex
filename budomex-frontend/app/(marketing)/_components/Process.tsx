@@ -10,32 +10,32 @@ type Step = {
 
 const STEPS: Step[] = [
   {
-    n: "01",
+    n: "1",
     t: "Wyślij zapytanie",
     d: "Wypełniasz formularz (bez logowania, bez kont) albo dzwonisz. Opisujesz, co potrzebujesz.",
-    meta: "dzień 1",
-    icon: "file-text",
+    meta: "10 minut",
+    icon: "send",
   },
   {
-    n: "02",
+    n: "2",
     t: "Wycena w 48 h",
     d: "Dostajesz na maila kompletną ofertę: jedna cena, termin produkcji, termin montażu. Akceptacja jednym klikiem.",
     meta: "do 48 h",
-    icon: "check-circle",
+    icon: "mail-check",
   },
   {
-    n: "03",
+    n: "3",
     t: "Produkcja",
-    d: "Po akceptacji ruszamy z produkcją w naszym zakładzie. Postęp śledzisz na unikalnym linku, na żywo.",
-    meta: "7–21 dni",
-    icon: "activity",
+    d: "Po akceptacji ruszamy z produkcją w naszym zakładzie. Postęp śledzisz na żywo, pod własnym linkiem.",
+    meta: "7-21 dni",
+    icon: "factory",
   },
   {
-    n: "04",
+    n: "4",
     t: "Montaż",
-    d: "Przyjeżdżamy w umówionym dniu, w umówionych godzinach. Po skończeniu — protokół i klucz w zamku.",
+    d: "Przyjeżdżamy w umówionym dniu, w umówionych godzinach. Po skończeniu - protokół i klucz w zamku.",
     meta: "1 dzień",
-    icon: "tool",
+    icon: "hard-hat",
   },
 ];
 
@@ -66,13 +66,13 @@ export default function Process() {
                 <div className="proc-num">
                   {s.n}
                   <span className="proc-icon-tag">
-                    <Icon name={s.icon} size={14} />
+                    <Icon name={s.icon} size={22} />
                   </span>
                 </div>
                 <h3>{s.t}</h3>
                 <p>{s.d}</p>
                 <span className="meta">
-                  <Icon name="clock" size={11} />
+                  <Icon name="clock" size={14} />
                   {s.meta}
                 </span>
               </div>

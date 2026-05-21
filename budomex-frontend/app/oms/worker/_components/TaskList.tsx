@@ -1,62 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Icon from "../../_components/Icon";
-import type { Task, TaskSection } from "./_data";
+import type { WorkerTask } from "../_hooks/useWorkerOrderDetail";
 
 export type Filter = "all" | "active" | "done";
 
 type Props = {
-  sections: TaskSection[];
-  onToggle: (sectionId: string, taskId: string) => void;
-  onAddTask: (sectionId: string, name: string) => void;
+  tasks: WorkerTask[];
+  onToggle: (task: WorkerTask) => void;
   filter: Filter;
   onFilterChange: (f: Filter) => void;
-  doneSection: string | null;
-  bumpingId: string | null;
-  glowingId: string | null;
+  bumpingId: number | null;
+  glowingId: number | null;
 };
 
-function visibleTasks(tasks: Task[], filter: Filter): Task[] {
-  if (filter === "done") return tasks.filter((t) => t.done);
-  if (filter === "active") return tasks.filter((t) => !t.done);
+function visibleTasks(tasks: WorkerTask[], filter: Filter): WorkerTask[] {
+  if (filter === "done") return tasks.filter((t) => t.completed);
+  if (filter === "active") return tasks.filter((t) => !t.completed);
   return tasks;
 }
 
+function categoryLabel(c: string | null): string {
+  if (!c) return "Pozostałe";
+  return c;
+}
+
 export default function TaskList({
-  sections,
+  tasks,
   onToggle,
-  onAddTask,
   filter,
   onFilterChange,
-  doneSection,
   bumpingId,
   glowingId,
 }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [adding, setAdding] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
-
-  const totalDone = sections.reduce(
-    (a, s) => a + s.tasks.filter((t) => t.done).length,
-    0,
+  const [recentlyDoneSection, setRecentlyDoneSection] = useState<string | null>(
+    null,
   );
-  const totalAll = sections.reduce((a, s) => a + s.tasks.length, 0);
+  const prevSectionStatusRef = useRef<Record<string, boolean>>({});
 
-  const startAdd = (sectionId: string) => {
-    setAdding(sectionId);
-    setDraft("");
-    setTimeout(() => {
-      document.querySelector<HTMLInputElement>(".add-task-row input")?.focus();
-    }, 50);
-  };
+  const sortedTasks = useMemo(
+    () =>
+      tasks.slice().sort((a, b) => a.sequenceNumber - b.sequenceNumber),
+    [tasks],
+  );
 
-  const saveAdd = () => {
-    if (!draft.trim() || !adding) return;
-    onAddTask(adding, draft.trim());
-    setAdding(null);
-    setDraft("");
-  };
+  // Aktywne zadanie = pierwsze niedokończone w sekwencji
+  const activeTaskId = useMemo(
+    () => sortedTasks.find((t) => !t.completed)?.id ?? null,
+    [sortedTasks],
+  );
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, WorkerTask[]>();
+    for (const t of sortedTasks) {
+      const key = categoryLabel(t.category);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    }
+    return Array.from(map.entries());
+  }, [sortedTasks]);
+
+  // Detect when a section just became fully done — show celebratory banner.
+  useEffect(() => {
+    const prev = prevSectionStatusRef.current;
+    const next: Record<string, boolean> = {};
+    for (const [category, list] of grouped) {
+      next[category] = list.length > 0 && list.every((t) => t.completed);
+      if (next[category] && prev[category] === false) {
+        setRecentlyDoneSection(category);
+        const timer = setTimeout(() => setRecentlyDoneSection(null), 2400);
+        prevSectionStatusRef.current = next;
+        return () => clearTimeout(timer);
+      }
+    }
+    prevSectionStatusRef.current = next;
+  }, [grouped]);
+
+  const totalDone = sortedTasks.filter((t) => t.completed).length;
+  const totalAll = sortedTasks.length;
 
   return (
     <div className="card">
@@ -68,30 +91,31 @@ export default function TaskList({
           </span>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div className="seg" role="tablist">
+          <div
+            className="seg"
+            role="group"
+            aria-label="Filtr zadań"
+          >
             <button
               type="button"
-              role="tab"
               className={`seg-btn ${filter === "all" ? "active" : ""}`}
-              aria-selected={filter === "all"}
+              aria-pressed={filter === "all"}
               onClick={() => onFilterChange("all")}
             >
               Wszystkie
             </button>
             <button
               type="button"
-              role="tab"
               className={`seg-btn ${filter === "active" ? "active" : ""}`}
-              aria-selected={filter === "active"}
+              aria-pressed={filter === "active"}
               onClick={() => onFilterChange("active")}
             >
               Aktywne
             </button>
             <button
               type="button"
-              role="tab"
               className={`seg-btn ${filter === "done" ? "active" : ""}`}
-              aria-selected={filter === "done"}
+              aria-pressed={filter === "done"}
               onClick={() => onFilterChange("done")}
             >
               Ukończone
@@ -100,32 +124,46 @@ export default function TaskList({
         </div>
       </div>
 
-      {sections.map((section, sIdx) => {
-        const sectionDone = section.tasks.filter((t) => t.done).length;
-        const sectionTotal = section.tasks.length;
+      {totalAll === 0 && (
+        <div
+          style={{
+            padding: "28px 20px",
+            textAlign: "center",
+            color: "var(--text-dim)",
+            fontSize: 13.5,
+            fontStyle: "italic",
+          }}
+        >
+          Manager nie przypisał jeszcze zadań do tego zamówienia.
+        </div>
+      )}
+
+      {grouped.map(([category, sectionTasks], sIdx) => {
+        const sectionDone = sectionTasks.filter((t) => t.completed).length;
+        const sectionTotal = sectionTasks.length;
         const allDone = sectionDone === sectionTotal && sectionTotal > 0;
         const sectionPct = sectionTotal > 0 ? (sectionDone / sectionTotal) * 100 : 0;
-        const isCollapsed = !!collapsed[section.id];
-        const tasks = visibleTasks(section.tasks, filter);
-        const isLast = sIdx === sections.length - 1;
+        const isCollapsed = !!collapsed[category];
+        const visibles = visibleTasks(sectionTasks, filter);
+        const isLast = sIdx === grouped.length - 1;
 
         return (
           <div
-            key={section.id}
+            key={category}
             className={`task-section ${isCollapsed ? "collapsed" : ""} ${allDone ? "task-section-done" : ""} ${isLast ? "last-of" : ""}`}
           >
             <button
               type="button"
               className="task-section-head"
               onClick={() =>
-                setCollapsed((c) => ({ ...c, [section.id]: !c[section.id] }))
+                setCollapsed((c) => ({ ...c, [category]: !c[category] }))
               }
               aria-expanded={!isCollapsed}
             >
               <span className="chev">
                 <Icon name="chevron-down" size={15} />
               </span>
-              <h4>{section.title}</h4>
+              <h4>{category}</h4>
               <div className="task-section-progress">
                 {allDone && (
                   <span className="section-done-badge">
@@ -145,57 +183,58 @@ export default function TaskList({
               </div>
             </button>
 
-            {doneSection === section.id && (
-              <div className="section-done-banner">
-                <Icon name="check-circle" size={14} />
-                <span>Sekcja &bdquo;{section.title}&rdquo; ukończona. Świetna robota.</span>
+            {recentlyDoneSection === category && (
+              <div className="section-done-banner-wrap">
+                <div className="section-done-banner" role="status">
+                  <Icon name="check-circle" size={14} />
+                  <span>
+                    Sekcja „{category}" ukończona. Świetna robota.
+                  </span>
+                </div>
               </div>
             )}
 
             <div className="task-section-body">
-              {tasks.map((t) => (
-                <button
-                  type="button"
-                  key={t.id}
-                  data-task-id={t.id}
-                  className={`task-row ${t.done ? "done" : ""} ${t.active ? "active-task" : ""} ${glowingId === t.id ? "glow" : ""}`}
-                  onClick={() => onToggle(section.id, t.id)}
-                  aria-pressed={t.done}
-                >
-                  <span
-                    className={`task-check ${bumpingId === t.id ? "bumping" : ""} ${t.active && !t.done ? "active-target" : ""}`}
-                    aria-hidden="true"
+              {visibles.map((t) => {
+                const isActive = activeTaskId === t.id;
+                return (
+                  <button
+                    type="button"
+                    key={t.id}
+                    data-task-id={t.id}
+                    className={`task-row ${t.completed ? "done" : ""} ${isActive ? "active-task" : ""} ${glowingId === t.id ? "glow" : ""}`}
+                    onClick={() => onToggle(t)}
+                    role="checkbox"
+                    aria-checked={t.completed}
+                    aria-label={t.description}
                   >
-                    {t.done && <Icon name="check" size={14} strokeWidth={3} />}
-                  </span>
-                  <div className="task-body">
-                    <div className="task-name">
-                      {t.name}
-                      {t.active && !t.done && (
-                        <span className="active-tag">aktywne</span>
+                    <span
+                      className={`task-check ${bumpingId === t.id ? "bumping" : ""} ${isActive && !t.completed ? "active-target" : ""}`}
+                      aria-hidden="true"
+                    >
+                      {t.completed && (
+                        <Icon name="check" size={14} strokeWidth={3} />
                       )}
+                    </span>
+                    <div className="task-body">
+                      <div className="task-name">
+                        {t.description}
+                        {isActive && !t.completed && (
+                          <>
+                            <span className="active-tag">aktywne</span>
+                            <span className="sr-only">— następne do wykonania</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    {t.desc && <div className="task-desc">{t.desc}</div>}
-                  </div>
-                  <div className="task-meta">
-                    {t.done ? (
-                      <>
-                        Ukończone
-                        <br />
-                        <span className="meta-strong">{t.doneTime}</span>
-                      </>
-                    ) : (
-                      <>
-                        Szac. czas
-                        <br />
-                        <span className="meta-strong">{t.est}</span>
-                      </>
-                    )}
-                  </div>
-                </button>
-              ))}
+                    <div className="task-meta">
+                      {t.completed ? "Ukończone" : "Do zrobienia"}
+                    </div>
+                  </button>
+                );
+              })}
 
-              {tasks.length === 0 && (
+              {visibles.length === 0 && sectionTotal > 0 && (
                 <div
                   style={{
                     padding: 24,
@@ -207,51 +246,6 @@ export default function TaskList({
                 >
                   Brak zadań w tym filtrze.
                 </div>
-              )}
-
-              {adding === section.id ? (
-                <div className="add-task-row">
-                  <input
-                    type="text"
-                    placeholder="Nazwa nowego zadania…"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveAdd();
-                      if (e.key === "Escape") {
-                        setAdding(null);
-                        setDraft("");
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="btn sm"
-                    onClick={saveAdd}
-                    disabled={!draft.trim()}
-                  >
-                    Zapisz
-                  </button>
-                  <button
-                    type="button"
-                    className="btn ghost sm"
-                    onClick={() => {
-                      setAdding(null);
-                      setDraft("");
-                    }}
-                  >
-                    Anuluj
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="add-task-trigger"
-                  onClick={() => startAdd(section.id)}
-                >
-                  <Icon name="plus" size={13} />
-                  <span>Dodaj zadanie do sekcji</span>
-                </button>
               )}
             </div>
           </div>

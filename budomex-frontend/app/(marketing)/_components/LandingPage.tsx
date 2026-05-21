@@ -11,7 +11,6 @@ import Testimonials from "./Testimonials";
 import FAQ from "./FAQ";
 import Contact from "./Contact";
 import Footer from "./Footer";
-import Icon from "./Icon";
 
 const PRODUCT_KEYS: ProductKey[] = [
   "okna",
@@ -30,7 +29,6 @@ function readCategoryFromHash(): ProductKey | "" {
 
 export default function LandingPage() {
   const [category, setCategory] = useState<ProductKey | "">("");
-  const [showMobileCta, setShowMobileCta] = useState(false);
 
   useEffect(() => {
     setCategory(readCategoryFromHash());
@@ -51,54 +49,23 @@ export default function LandingPage() {
     }, 0);
   }, []);
 
-  useEffect(() => {
-    const onScroll = () => {
-      const hero = document.getElementById("hero");
-      const contact = document.getElementById("wycena");
-      if (!hero || !contact) return;
-      const heroBottom = hero.getBoundingClientRect().bottom;
-      const contactTop = contact.getBoundingClientRect().top;
-      const vh = window.innerHeight;
-      setShowMobileCta(heroBottom < 0 && contactTop > vh * 0.8);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const onMobileCta = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    document
-      .getElementById("wycena")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   return (
     <>
-      <a href="#oferta" className="skip-link">
+      <a href="#tresc" className="skip-link">
         Przejdź do treści
       </a>
       <Nav />
-      <main>
+      <main id="tresc" tabIndex={-1}>
         <Hero />
         <Products onAsk={askFor} />
         <Process />
-        <WhyUs />
         <Realizacje />
+        <WhyUs />
         <Testimonials />
         <FAQ />
         <Contact initialCategory={category} />
       </main>
       <Footer />
-
-      <a
-        href="#wycena"
-        className={`btn lg mobile-cta ${showMobileCta ? "visible" : ""}`}
-        onClick={onMobileCta}
-      >
-        Wyceń za 48&nbsp;h
-        <Icon name="arrow-right" size={16} />
-      </a>
     </>
   );
 }

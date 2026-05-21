@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth";
+import { ToastProvider } from "@/lib/toast";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -29,7 +30,9 @@ export default function RootLayout({
   return (
     <html lang="pl" className={`${archivo.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useOrders } from "../_hooks/useOrders";
 import OrdersListView from "../_components/OrdersListView";
 import {
   BACKEND_STATUS_MAP,
   type BackendOrderStatus,
 } from "../_components/_data";
+import { usePageTitle } from "../../_components/usePageTitle";
 
 type Filter = "all" | BackendOrderStatus;
 
@@ -19,9 +21,29 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "MONTAZ", label: BACKEND_STATUS_MAP.MONTAZ.label },
 ];
 
+const VALID: Filter[] = FILTERS.map((f) => f.key);
+
+function parseFilter(raw: string | null): Filter {
+  if (raw && (VALID as string[]).includes(raw)) return raw as Filter;
+  return "all";
+}
+
 export default function OrdersPage() {
   const { data, isLoading } = useOrders();
-  const [filter, setFilter] = useState<Filter>("all");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const filter = parseFilter(searchParams.get("status"));
+  usePageTitle("Zamówienia · Budomex OMS");
+
+  const setFilter = (next: Filter) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "all") params.delete("status");
+    else params.set("status", next);
+    const qs = params.toString();
+    router.replace(qs ? `/oms/manager/orders?${qs}` : "/oms/manager/orders", {
+      scroll: false,
+    });
+  };
 
   const counts = useMemo(() => {
     const map: Partial<Record<BackendOrderStatus, number>> = {};
@@ -40,6 +62,7 @@ export default function OrdersPage() {
     <>
       <header className="content-header">
         <div>
+          <div className="content-crumb">OMS · Zamówienia</div>
           <h1 className="content-title">Zamówienia</h1>
           <p className="content-sub">
             {isLoading

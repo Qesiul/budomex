@@ -11,7 +11,7 @@ type Realiz = {
 const REALIZACJE: Realiz[] = [
   {
     tag: "Okna PCV",
-    title: "Okna PCV — dom jednorodzinny",
+    title: "Okna PCV - dom jednorodzinny",
     place: "Bydgoszcz, Fordon",
     date: "03.2026",
     count: "12 okien",
@@ -39,7 +39,7 @@ const REALIZACJE: Realiz[] = [
   },
   {
     tag: "Okna ALU",
-    title: "Okna aluminium — apartament",
+    title: "Okna aluminium - apartament",
     place: "Bydgoszcz, Śródmieście",
     date: "11.2025",
     count: "5 okien",
@@ -64,8 +64,8 @@ export default function Realizacje() {
             Błota.
           </h2>
           <p className="sub">
-            Wszystkie zdjęcia poniżej to nasze wykonania — z&nbsp;zgodą
-            właścicieli, bez stocków i&nbsp;bez renderów. Pełna galeria
+            Wszystkie zdjęcia poniżej to nasze wykonania - za&nbsp;zgodą
+            właścicieli, bez stocków i&nbsp;renderów. Pełna galeria
             w&nbsp;przygotowaniu.
           </p>
         </div>
@@ -91,7 +91,7 @@ export default function Realizacje() {
                 <span className="tag">
                   {r.tag} · {r.count}
                 </span>
-                <h4>{r.title}</h4>
+                <h3>{r.title}</h3>
                 <div className="footer-row">
                   <span>
                     <Icon name="map-pin" size={11} /> {r.place}

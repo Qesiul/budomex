@@ -7,6 +7,8 @@ import { useWorkers } from "../_hooks/useWorkers";
 import { useTaskTemplates } from "../_hooks/useTaskTemplates";
 import { api, ApiError } from "@/lib/api";
 import { invalidateOrders, invalidateWorkers } from "../_lib/mutations";
+import { useToast } from "@/lib/toast";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 import {
   BACKEND_STATUS_MAP,
   PRODUCT_LABELS,
@@ -52,8 +54,12 @@ const WORKLOAD_LABEL: Record<string, string> = {
   critical: "7+",
 };
 
+type Tab = "details" | "team" | "tasks" | "history";
+
 export default function OrderDetailModal({ orderId, onClose }: Props) {
   const { data, error, isLoading } = useOrderDetail(orderId);
+  const [tab, setTab] = useState<Tab>("details");
+  const trapRef = useFocusTrap<HTMLDivElement>(true);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -64,6 +70,11 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
   }, [onClose]);
 
   const ref = formatRef(orderId);
+  const tasksCount = data?.productionTasks.length ?? 0;
+  const tasksDone =
+    data?.productionTasks.filter((t) => t.completed).length ?? 0;
+  const teamCount = data?.assignedWorkers.length ?? 0;
+  const historyCount = data?.history.length ?? 0;
 
   return (
     <div
@@ -76,6 +87,7 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
       aria-label={`Szczegóły zamówienia ${ref}`}
     >
       <div
+        ref={trapRef}
         className="qm-modal qm-modal-lg"
         onClick={(e) => e.stopPropagation()}
       >
@@ -93,6 +105,80 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
             <Icon name="x" size={16} />
           </button>
         </header>
+
+        {data && (
+          <div
+            className="qm-tabs"
+            role="tablist"
+            aria-label="Sekcje zamówienia"
+            onKeyDown={(e) => {
+              const order: Tab[] = ["details", "team", "tasks", "history"];
+              const idx = order.indexOf(tab);
+              if (e.key === "ArrowRight") {
+                e.preventDefault();
+                setTab(order[(idx + 1) % order.length]);
+              } else if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                setTab(order[(idx - 1 + order.length) % order.length]);
+              } else if (e.key === "Home") {
+                e.preventDefault();
+                setTab(order[0]);
+              } else if (e.key === "End") {
+                e.preventDefault();
+                setTab(order[order.length - 1]);
+              }
+            }}
+          >
+            <button
+              type="button"
+              role="tab"
+              id="tab-details"
+              aria-selected={tab === "details"}
+              aria-controls="panel-details"
+              tabIndex={tab === "details" ? 0 : -1}
+              className={`qm-tab ${tab === "details" ? "active" : ""}`}
+              onClick={() => setTab("details")}
+            >
+              Szczegóły
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-team"
+              aria-selected={tab === "team"}
+              aria-controls="panel-team"
+              tabIndex={tab === "team" ? 0 : -1}
+              className={`qm-tab ${tab === "team" ? "active" : ""}`}
+              onClick={() => setTab("team")}
+            >
+              Zespół ({teamCount})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-tasks"
+              aria-selected={tab === "tasks"}
+              aria-controls="panel-tasks"
+              tabIndex={tab === "tasks" ? 0 : -1}
+              className={`qm-tab ${tab === "tasks" ? "active" : ""}`}
+              onClick={() => setTab("tasks")}
+            >
+              Zadania{tasksCount > 0 ? ` (${tasksDone}/${tasksCount})` : ""}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-history"
+              aria-selected={tab === "history"}
+              aria-controls="panel-history"
+              tabIndex={tab === "history" ? 0 : -1}
+              className={`qm-tab ${tab === "history" ? "active" : ""}`}
+              onClick={() => setTab("history")}
+            >
+              Historia ({historyCount})
+            </button>
+          </div>
+        )}
 
         <div className="qm-body">
           {isLoading && (
@@ -135,6 +221,12 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
                 </div>
               </section>
 
+              {tab === "details" && (
+              <div
+                role="tabpanel"
+                id="panel-details"
+                aria-labelledby="tab-details"
+              >
               <section className="qm-section">
                 <h4>Klient</h4>
                 <div className="qm-info-grid">
@@ -218,19 +310,43 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
                   </div>
                 </div>
               </section>
+              </div>
+              )}
 
-              <WorkersSection
-                orderId={orderId}
-                currentWorkers={data.assignedWorkers}
-              />
+              {tab === "team" && (
+                <div
+                  role="tabpanel"
+                  id="panel-team"
+                  aria-labelledby="tab-team"
+                >
+                  <WorkersSection
+                    orderId={orderId}
+                    currentWorkers={data.assignedWorkers}
+                  />
+                </div>
+              )}
 
-              <TasksSection
-                orderId={orderId}
-                status={data.status as BackendOrderStatus}
-                productType={data.productType}
-                productionTasks={data.productionTasks}
-              />
+              {tab === "tasks" && (
+                <div
+                  role="tabpanel"
+                  id="panel-tasks"
+                  aria-labelledby="tab-tasks"
+                >
+                  <TasksSection
+                    orderId={orderId}
+                    status={data.status as BackendOrderStatus}
+                    productType={data.productType}
+                    productionTasks={data.productionTasks}
+                  />
+                </div>
+              )}
 
+              {tab === "history" && (
+              <div
+                role="tabpanel"
+                id="panel-history"
+                aria-labelledby="tab-history"
+              >
               <section className="qm-section">
                 <h4>Historia statusów</h4>
                 {data.history.length === 0 ? (
@@ -265,6 +381,8 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
                   </div>
                 )}
               </section>
+              </div>
+              )}
             </>
           )}
         </div>
@@ -297,6 +415,7 @@ function WorkersSection({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const { data: workers, isLoading: workersLoading } = useWorkers();
+  const toast = useToast();
 
   // Reset selection when entering edit mode (sync with latest props)
   useEffect(() => {
@@ -326,12 +445,17 @@ function WorkersSection({
       await invalidateOrders();
       await invalidateWorkers();
       setEditing(false);
+      toast.success(
+        "Zespół zaktualizowany",
+        `Przypisano ${selected.size} ${selected.size === 1 ? "pracownika" : "pracowników"} do zamówienia.`,
+      );
     } catch (e) {
-      setErr(
+      const msg =
         e instanceof ApiError && e.message
           ? e.message
-          : "Nie udało się zapisać przypisań.",
-      );
+          : "Nie udało się zapisać przypisań.";
+      setErr(msg);
+      toast.error("Nie zapisano przypisań", msg);
     } finally {
       setSaving(false);
     }
@@ -467,6 +591,7 @@ function TasksSection({
   const [customAdded, setCustomAdded] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const toast = useToast();
 
   // Init selection from existing tasks when entering edit mode
   useEffect(() => {
@@ -529,12 +654,17 @@ function TasksSection({
       });
       await invalidateOrders();
       setEditing(false);
+      toast.success(
+        "Zadania zapisane",
+        `${list.length} ${list.length === 1 ? "zadanie" : "zadań"} przypisanych do zamówienia.`,
+      );
     } catch (e) {
-      setErr(
+      const msg =
         e instanceof ApiError && e.message
           ? e.message
-          : "Nie udało się zapisać zadań.",
-      );
+          : "Nie udało się zapisać zadań.";
+      setErr(msg);
+      toast.error("Nie zapisano zadań", msg);
     } finally {
       setSaving(false);
     }

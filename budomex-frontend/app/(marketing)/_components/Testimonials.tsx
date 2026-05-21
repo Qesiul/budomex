@@ -2,48 +2,40 @@ import Icon from "./Icon";
 
 type Testimonial = {
   name: string;
-  initials: string;
   place: string;
   job: string;
-  stars: number;
   quote: string;
 };
 
 const TESTIMONIALS: Testimonial[] = [
   {
-    name: "Marek Janicki",
-    initials: "MJ",
-    place: "Bydgoszcz · Fordon",
-    job: "Okna PCV — 12 szt.",
-    stars: 5,
+    name: "Marek",
+    place: "Bydgoszcz",
+    job: "Okna",
     quote:
       "Solidnie, terminowo, bez gadania. Montaż zaczęli o 7:30, skończyli przed 16:00. Polecam.",
   },
   {
-    name: "Iwona Kowalczyk",
-    initials: "IK",
+    name: "Iwona",
     place: "Osielsko",
-    job: "Drzwi wejściowe + brama",
-    stars: 5,
+    job: "Drzwi",
     quote:
       "Wycena przyszła na maila po 31 godzinach. Termin montażu przesunęli o jeden dzień, ale uprzedzili tydzień wcześniej. Konkretni ludzie.",
   },
   {
-    name: "Tadeusz Lewandowski",
-    initials: "TL",
+    name: "Tadeusz",
     place: "Solec Kujawski",
-    job: "Rolety zewnętrzne — 9 szt.",
-    stars: 5,
+    job: "Rolety",
     quote:
       "Najbardziej spodobało mi się to, że na stronie widziałem, na jakim etapie jest moje zamówienie. Bez dzwonienia, bez nerwów.",
   },
 ];
 
-function Stars({ n }: { n: number }) {
+function Stars() {
   return (
-    <span className="stars" aria-label={`${n} z 5 gwiazdek`}>
-      {Array.from({ length: n }).map((_, i) => (
-        <Icon key={i} name="star" size={14} />
+    <span className="stars" aria-label="Ocena 5 z 5 gwiazdek">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Icon key={i} name="star" size={15} />
       ))}
     </span>
   );
@@ -60,11 +52,14 @@ export default function Testimonials() {
         <div className="testimonials">
           {TESTIMONIALS.map((t, i) => (
             <article className="testimonial" key={i}>
-              <Stars n={t.stars} />
-              <blockquote>{t.quote}</blockquote>
-              <div className="who">
-                <span className="avatar">{t.initials}</span>
-                <div>
+              <div className="testimonial-photo" aria-hidden="true">
+                <Icon name="home" size={48} className="house-icon" />
+                <span className="label">[ zdjęcie realizacji ]</span>
+              </div>
+              <div className="testimonial-body">
+                <Stars />
+                <blockquote>{t.quote}</blockquote>
+                <div className="who">
                   <div className="name">{t.name}</div>
                   <div className="who-meta">
                     {t.place} · {t.job}

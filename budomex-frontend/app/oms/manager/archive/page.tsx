@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useOrders } from "../_hooks/useOrders";
 import OrdersListView from "../_components/OrdersListView";
 import type { BackendOrderStatus } from "../_components/_data";
+import { usePageTitle } from "../../_components/usePageTitle";
 
 const ARCHIVE_STATUSES: BackendOrderStatus[] = [
   "ZREALIZOWANE",
@@ -14,6 +15,7 @@ const ARCHIVE_STATUSES: BackendOrderStatus[] = [
 
 export default function ArchivePage() {
   const { data, isLoading } = useOrders();
+  usePageTitle("Archiwum · Budomex OMS");
 
   const count = useMemo(() => {
     return (data?.orders ?? []).filter((o) =>
@@ -25,6 +27,7 @@ export default function ArchivePage() {
     <>
       <header className="content-header">
         <div>
+          <div className="content-crumb">OMS · Archiwum</div>
           <h1 className="content-title">Archiwum</h1>
           <p className="content-sub">
             {isLoading

@@ -62,7 +62,12 @@ export default function UserMenu({
       </button>
 
       {open && (
-        <div className="user-pop" role="menu">
+        <div
+          className="user-pop"
+          role="menu"
+          aria-orientation="vertical"
+          aria-label="Menu konta"
+        >
           <div className="user-pop-head">
             <div className="name">{user.fullName}</div>
             <div className="meta">

@@ -6,10 +6,6 @@ export default function LoginPage() {
     <div className="login-shell">
       <AtmospherePanel />
       <main className="login-main">
-        <div className="login-corner" aria-hidden="true">
-          <span className="dot" />
-          <span>Logowanie</span>
-        </div>
         <LoginForm />
       </main>
     </div>

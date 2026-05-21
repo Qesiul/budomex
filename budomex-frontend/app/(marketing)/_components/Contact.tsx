@@ -118,11 +118,15 @@ export default function Contact({ initialCategory }: Props) {
   const [sent, setSent] = useState(false);
   const [refNumber, setRefNumber] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [prefilled, setPrefilled] = useState(false);
 
   useEffect(() => {
     if (initialCategory && initialCategory !== values.category) {
       setValues((v) => ({ ...v, category: initialCategory }));
       setErrors((e) => ({ ...e, category: "" }));
+      setPrefilled(true);
+      const t = setTimeout(() => setPrefilled(false), 1800);
+      return () => clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCategory]);
@@ -231,13 +235,13 @@ export default function Contact({ initialCategory }: Props) {
   };
 
   return (
-    <section className="section paper-2" id="kontakt">
+    <section className="section dark" id="kontakt">
       <div className="container">
         <div className="section-head">
           <div className="eyebrow">Zapytaj o wycenę</div>
           <h2>Powiedz, co potrzebujesz. Odezwiemy się w&nbsp;48&nbsp;godzin.</h2>
           <p className="sub">
-            Wypełniasz formularz — bez logowania, bez kont. Dostajesz wycenę
+            Wypełniasz formularz - bez logowania, bez kont. Dostajesz wycenę
             na&nbsp;maila i&nbsp;numer referencyjny do&nbsp;śledzenia zamówienia.
           </p>
         </div>
@@ -253,9 +257,9 @@ export default function Contact({ initialCategory }: Props) {
                 <div>
                   <div className="lab">Adres</div>
                   <div className="val body">
-                    ul. Fordońska 213
+                    ul. Juliusza Kossaka 35
                     <br />
-                    85-739 Bydgoszcz
+                    85-307 Bydgoszcz
                   </div>
                 </div>
               </div>
@@ -284,18 +288,21 @@ export default function Contact({ initialCategory }: Props) {
                 <div>
                   <div className="lab">Godziny pracy</div>
                   <div className="val body">
-                    pon–pt 8:00–17:00 <small>· biuro i&nbsp;telefon</small>
+                    pon-pt 8:00-17:00 <small>· biuro i&nbsp;telefon</small>
                     <br />
-                    sob 9:00–13:00 <small>· tylko telefonicznie</small>
+                    sob 9:00-13:00 <small>· tylko telefonicznie</small>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="map-stub" aria-label="Mapa — placeholder">
-              <div className="map-pin">
-                <div className="pin-body" />
-              </div>
-              <div className="map-label">ul. Fordońska 213, Bydgoszcz</div>
+            <div className="map-embed">
+              <iframe
+                title="Mapa - ul. Juliusza Kossaka 35, Bydgoszcz"
+                src="https://maps.google.com/maps?q=ul.%20Juliusza%20Kossaka%2035%2C%2085-307%20Bydgoszcz&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
             </div>
           </div>
 
@@ -314,9 +321,9 @@ export default function Contact({ initialCategory }: Props) {
                 <div className="ref">{refNumber}</div>
                 <p>
                   Dziękujemy. Wycenę wyślemy na <strong>{values.email}</strong>{" "}
-                  w&nbsp;ciągu <strong>48&nbsp;godzin roboczych</strong>. Pod
-                  podanym numerem referencyjnym będziesz mógł śledzić status
-                  zamówienia po jego akceptacji.
+                  w&nbsp;ciągu <strong>48&nbsp;godzin roboczych</strong>. Po jej
+                  akceptacji pod tym numerem referencyjnym sprawdzisz status
+                  zamówienia.
                 </p>
                 <div className="timeline">
                   <Icon name="clock" size={12} />
@@ -431,7 +438,7 @@ export default function Contact({ initialCategory }: Props) {
                 </div>
 
                 <div className="field-row">
-                  <div className={fieldClass("category")}>
+                  <div className={`${fieldClass("category")} ${prefilled ? "prefilled" : ""}`}>
                     <label htmlFor="f-cat">
                       Kategoria<span className="req">*</span>
                     </label>
@@ -509,7 +516,7 @@ export default function Contact({ initialCategory }: Props) {
                   </label>
                   <textarea
                     id="f-det"
-                    placeholder="Wymiary, kolor, materiał (PCV / drewno / alu), dodatkowe uwagi — wszystko, co przyjdzie ci do głowy. Im więcej, tym celniejsza wycena."
+                    placeholder="Wymiary, kolor, materiał (PCV / drewno / alu), dodatkowe uwagi - wszystko, co przyjdzie ci do głowy. Im więcej, tym celniejsza wycena."
                     value={values.details}
                     onChange={(e) => setField("details", e.target.value)}
                     rows={4}
