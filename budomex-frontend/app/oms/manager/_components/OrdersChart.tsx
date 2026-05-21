@@ -77,23 +77,26 @@ export default function OrdersChart() {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const { data: monthly, isLoading: monthlyLoading } = useMonthlyStats();
-  const { data: ordersResp } = useOrders();
+  const { data: ordersResp, isLoading: ordersLoading } = useOrders();
 
   const data = useMemo(
     () => buildChart(monthly, ordersResp?.orders),
     [monthly, ordersResp],
   );
 
-  const hasData = data.some((d) =>
+  const initialLoading = (monthlyLoading || ordersLoading) && !ordersResp;
+  const hasModeData = data.some((d) =>
     mode === "count" ? d.count > 0 : d.value > 0,
   );
 
   const values = data.map((d) => (mode === "count" ? d.count : d.value));
-  const max = Math.max(...values, 1);
+  const max = Math.max(...values, 0);
   const niceMax =
     mode === "count"
       ? Math.max(10, Math.ceil(max / 10) * 10)
-      : Math.max(10_000, Math.ceil(max / 10_000) * 10_000);
+      : max === 0
+        ? 10_000
+        : Math.max(10_000, Math.ceil(max / 10_000) * 10_000);
 
   const barW = (innerW / data.length) * 0.62;
   const gap = innerW / data.length - barW;
@@ -107,9 +110,11 @@ export default function OrdersChart() {
   const fmt = (v: number) =>
     mode === "count"
       ? String(Math.round(v))
-      : v >= 1000
-        ? `${(v / 1000).toFixed(0)}k`
-        : String(Math.round(v));
+      : v >= 1_000_000
+        ? `${(v / 1_000_000).toFixed(1)}M`
+        : v >= 1000
+          ? `${Math.round(v / 1000)}k`
+          : String(Math.round(v));
 
   return (
     <div className="card">
@@ -140,7 +145,7 @@ export default function OrdersChart() {
         </div>
       </div>
       <div className="chart-wrap">
-        {monthlyLoading && !hasData ? (
+        {initialLoading ? (
           <div
             style={{
               padding: "60px 0",
@@ -152,25 +157,17 @@ export default function OrdersChart() {
           >
             Ładuję dane wykresu…
           </div>
-        ) : !hasData ? (
-          <div
-            style={{
-              padding: "60px 0",
-              textAlign: "center",
-              color: "var(--text-dim)",
-              fontSize: 13,
-              fontStyle: "italic",
-            }}
-          >
-            Brak danych do wyświetlenia w wybranym trybie.
-          </div>
         ) : (
           <svg
             className="chart-svg"
             viewBox={`0 0 ${W} ${H}`}
             preserveAspectRatio="none"
             role="img"
-            aria-label="Wykres zamówień miesięcznie"
+            aria-label={
+              mode === "count"
+                ? "Wykres liczby zamówień miesięcznie"
+                : "Wykres wartości zamówień miesięcznie"
+            }
           >
             {tickVals.map((t, i) => {
               const y = padding.top + innerH - (t / niceMax) * innerH;
@@ -190,25 +187,36 @@ export default function OrdersChart() {
                     textAnchor="end"
                   >
                     {fmt(t)}
+                    {mode === "value" && t > 0 ? " zł" : ""}
                   </text>
                 </g>
               );
             })}
             {data.map((d, i) => {
               const v = mode === "count" ? d.count : d.value;
-              const h = (v / niceMax) * innerH;
+              const h = v > 0 ? Math.max((v / niceMax) * innerH, 2) : 0;
               const x = padding.left + i * (innerW / data.length) + gap / 2;
               const y = padding.top + innerH - h;
               return (
                 <g key={i}>
+                  {h > 0 && (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={barW}
+                      height={h}
+                      rx={2}
+                      className="chart-bar"
+                      fill={hoverIdx === i ? "var(--accent)" : undefined}
+                    />
+                  )}
+                  {/* always-on hover hitbox so empty months still show tooltip */}
                   <rect
-                    x={x}
-                    y={y}
-                    width={barW}
-                    height={h}
-                    rx={2}
-                    className="chart-bar"
-                    fill={hoverIdx === i ? "var(--accent)" : undefined}
+                    x={x - gap / 2}
+                    y={padding.top}
+                    width={innerW / data.length}
+                    height={innerH}
+                    fill="transparent"
                     onMouseEnter={() => setHoverIdx(i)}
                     onMouseLeave={() => setHoverIdx(null)}
                   />
@@ -225,7 +233,7 @@ export default function OrdersChart() {
             })}
           </svg>
         )}
-        {hoverIdx != null && hasData &&
+        {hoverIdx != null && !initialLoading &&
           (() => {
             const d = data[hoverIdx];
             const x =
@@ -240,26 +248,33 @@ export default function OrdersChart() {
                 style={{ left: `calc(${leftPct}% - 70px)`, top: 0 }}
               >
                 <div className="tt-month">{d.month}</div>
-                <div className="tt-row">
-                  <span>Zamówienia</span>
-                  <span>
-                    <strong>{d.count}</strong>
-                  </span>
-                </div>
-                <div className="tt-row">
-                  <span>Wartość</span>
-                  <span>
-                    <strong>{formatPrice(d.value)}</strong>
-                  </span>
-                </div>
+                {mode === "count" ? (
+                  <div className="tt-row">
+                    <span>Zamówienia</span>
+                    <span>
+                      <strong>{d.count}</strong>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="tt-row">
+                    <span>Wartość</span>
+                    <span>
+                      <strong>{formatPrice(d.value)}</strong>
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })()}
       </div>
       <div className="chart-foot">
         {mode === "value"
-          ? "Wartość liczona z aktualnych wycen — historyczne dane mogą być niepełne."
-          : "Wykres nie uwzględnia zamówień anulowanych."}
+          ? hasModeData
+            ? "Wartość liczona z aktualnych wycen — historyczne dane mogą być niepełne."
+            : "Brak wycenionych zamówień. Wartość pojawi się po pierwszej zatwierdzonej wycenie."
+          : hasModeData
+            ? "Wykres nie uwzględnia zamówień anulowanych."
+            : "Brak zamówień w ostatnich 12 miesiącach."}
       </div>
     </div>
   );

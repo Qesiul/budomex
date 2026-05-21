@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Icon, { type OmsIconName } from "./Icon";
 import type { Role } from "./OmsShell";
+import { useOrders } from "../manager/_hooks/useOrders";
 
 type NavItem = {
   key: string;
@@ -14,15 +15,22 @@ type NavItem = {
   badgeMuted?: number;
 };
 
-const MANAGER_NAV: NavItem[] = [
-  { key: "dashboard", label: "Dashboard", icon: "layout-dashboard", href: "/oms/manager" },
-  { key: "inbox", label: "Nowe zapytania", icon: "inbox", href: "/oms/manager/inbox", badge: 3 },
-  { key: "orders", label: "Zamówienia", icon: "clipboard-list", href: "/oms/manager/orders", badgeMuted: 27 },
-  { key: "production", label: "Produkcja", icon: "hammer", href: "/oms/manager/production", badgeMuted: 12 },
-  { key: "install", label: "Montaż", icon: "truck", href: "/oms/manager/install", badgeMuted: 8 },
-  { key: "workers", label: "Pracownicy", icon: "users", href: "/oms/manager/workers" },
-  { key: "archive", label: "Archiwum", icon: "archive", href: "/oms/manager/archive" },
-];
+function buildManagerNav(counts: {
+  inbox: number;
+  orders: number;
+  production: number;
+  install: number;
+}): NavItem[] {
+  return [
+    { key: "dashboard", label: "Dashboard", icon: "layout-dashboard", href: "/oms/manager" },
+    { key: "inbox", label: "Nowe zapytania", icon: "inbox", href: "/oms/manager/inbox", badge: counts.inbox },
+    { key: "orders", label: "Zamówienia", icon: "clipboard-list", href: "/oms/manager/orders", badgeMuted: counts.orders },
+    { key: "production", label: "Produkcja", icon: "hammer", href: "/oms/manager/production", badgeMuted: counts.production },
+    { key: "install", label: "Montaż", icon: "truck", href: "/oms/manager/install", badgeMuted: counts.install },
+    { key: "workers", label: "Pracownicy", icon: "users", href: "/oms/manager/workers" },
+    { key: "archive", label: "Archiwum", icon: "archive", href: "/oms/manager/archive" },
+  ];
+}
 
 const WORKER_NAV: NavItem[] = [
   { key: "tasks", label: "Moje zadania", icon: "layout-grid", href: "/oms/worker" },
@@ -153,10 +161,27 @@ function WorkerExtras() {
   );
 }
 
+function ManagerNav({ pathname }: { pathname: string | null }) {
+  const { data } = useOrders();
+  const orders = data?.orders ?? [];
+  const counts = {
+    inbox: data?.countOczekujace ?? 0,
+    orders: orders.length,
+    production: orders.filter(
+      (o) =>
+        o.status === "ZAAKCEPTOWANE_PRZEZ_MISTRZA" ||
+        o.status === "W_REALIZACJI",
+    ).length,
+    install: orders.filter(
+      (o) => o.status === "ZREALIZOWANE" || o.status === "MONTAZ",
+    ).length,
+  };
+  return <NavLinks items={buildManagerNav(counts)} pathname={pathname} />;
+}
+
 export default function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
   const isWorker = role === "worker";
-  const navItems = isWorker ? WORKER_NAV : MANAGER_NAV;
 
   return (
     <aside className="sidebar">
@@ -171,7 +196,11 @@ export default function Sidebar({ role }: { role: Role }) {
       </div>
 
       <nav className="sb-nav" aria-label="Główna nawigacja">
-        <NavLinks items={navItems} pathname={pathname} />
+        {isWorker ? (
+          <NavLinks items={WORKER_NAV} pathname={pathname} />
+        ) : (
+          <ManagerNav pathname={pathname} />
+        )}
       </nav>
 
       {isWorker ? <WorkerExtras /> : <ManagerExtras pathname={pathname} />}

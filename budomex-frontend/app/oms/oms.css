@@ -2897,3 +2897,108 @@ table.orders-tbl tbody tr:hover .row-action { opacity: 1; }
   .order-header { flex-direction: column; gap: 16px; }
   .countdown-card { width: 100%; }
 }
+
+/* ============================================================
+   FILTER CHIPS (manager subpages — orders filter)
+   ============================================================ */
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text-mute);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 100ms, border-color 100ms, color 100ms;
+  font-family: inherit;
+}
+.filter-chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.filter-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.filter-chip.active:hover { background: var(--primary-deep); }
+.filter-chip-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg-sunken);
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+.filter-chip.active .filter-chip-count {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* ============================================================
+   PAGE-SOON (placeholder dla nieskończonych modułów)
+   ============================================================ */
+.page-soon {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 64px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+.page-soon-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.page-soon-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.page-soon-desc {
+  font-size: 13.5px;
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 460px;
+  line-height: 1.55;
+}
+.page-soon-tag {
+  margin-top: 6px;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
