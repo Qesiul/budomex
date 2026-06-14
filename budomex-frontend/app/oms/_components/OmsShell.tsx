@@ -19,12 +19,19 @@ export default function OmsShell({
   const router = useRouter();
   const { user, loading, logout } = useAuth();
 
+  // Motyw jest per-konto: czytamy preferencję zalogowanego usera i stosujemy ją
+  // przy każdej zmianie konta (np. po wylogowaniu managera i zalogowaniu
+  // pracownika na tym samym urządzeniu). Domyślnie jasny.
   useEffect(() => {
-    const current =
-      (document.documentElement.getAttribute("data-theme") as Theme | null) ??
-      "light";
-    setTheme(current);
-  }, []);
+    if (!user) return;
+    let next: Theme = "light";
+    try {
+      const saved = localStorage.getItem(`bdx-oms-theme:${user.username}`);
+      if (saved === "dark" || saved === "light") next = saved;
+    } catch {}
+    document.documentElement.setAttribute("data-theme", next);
+    setTheme(next);
+  }, [user]);
 
   useEffect(() => {
     if (loading) return;
@@ -42,11 +49,13 @@ export default function OmsShell({
   }, [loading, user, pathname, router]);
 
   const toggleTheme = () => {
+    if (!user) return;
+    const { username } = user;
     setTheme((prev) => {
       const next: Theme = prev === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
       try {
-        localStorage.setItem("bdx-oms-theme", next);
+        localStorage.setItem(`bdx-oms-theme:${username}`, next);
       } catch {}
       return next;
     });

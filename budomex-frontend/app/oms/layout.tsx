@@ -6,9 +6,20 @@ export const metadata: Metadata = {
   title: "Budomex OMS",
 };
 
+// Motyw jest powiązany z kontem (per username), nie globalnie z przeglądarką —
+// inaczej ciemny tryb managera "przeciekał" na pracownika logującego się na tym
+// samym urządzeniu. Czytamy zalogowanego usera z localStorage i jego motyw.
 const themeInitScript = `
 try {
-  var t = localStorage.getItem('bdx-oms-theme') || 'light';
+  var t = 'light';
+  var raw = localStorage.getItem('bdx-oms-user');
+  if (raw) {
+    var u = JSON.parse(raw);
+    if (u && u.username) {
+      var saved = localStorage.getItem('bdx-oms-theme:' + u.username);
+      if (saved === 'dark' || saved === 'light') t = saved;
+    }
+  }
   document.documentElement.setAttribute('data-theme', t);
 } catch (e) {}
 `;

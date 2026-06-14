@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Icon from "../../_components/Icon";
+import ConfirmDialog from "../../_components/ConfirmDialog";
 import { useOrderDetail } from "../_hooks/useOrderDetail";
 import { useWorkers } from "../_hooks/useWorkers";
 import { useTaskTemplates } from "../_hooks/useTaskTemplates";
@@ -56,18 +57,40 @@ const WORKLOAD_LABEL: Record<string, string> = {
 
 type Tab = "details" | "team" | "tasks" | "history";
 
+type PendingLeave = { type: "tab"; tab: Tab } | { type: "close" };
+
 export default function OrderDetailModal({ orderId, onClose }: Props) {
   const { data, error, isLoading } = useOrderDetail(orderId);
   const [tab, setTab] = useState<Tab>("details");
+  // Niezapisane zaznaczenia w edytorze zadań — żeby ostrzec przed wyjściem
+  // z listy (zmiana zakładki / zamknięcie modala kasuje wybór).
+  const [tasksDirty, setTasksDirty] = useState(false);
+  const [pending, setPending] = useState<PendingLeave | null>(null);
   const trapRef = useFocusTrap<HTMLDivElement>(true);
+
+  const requestTab = useCallback(
+    (next: Tab) => {
+      if (next === tab) return;
+      if (tab === "tasks" && tasksDirty) setPending({ type: "tab", tab: next });
+      else setTab(next);
+    },
+    [tab, tasksDirty],
+  );
+
+  const requestClose = useCallback(() => {
+    if (tab === "tasks" && tasksDirty) setPending({ type: "close" });
+    else onClose();
+  }, [tab, tasksDirty, onClose]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      // Gdy otwarte jest potwierdzenie wyjścia — obsługuje je ConfirmDialog.
+      if (pending) return;
+      if (e.key === "Escape") requestClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [pending, requestClose]);
 
   const ref = formatRef(orderId);
   const tasksCount = data?.productionTasks.length ?? 0;
@@ -80,7 +103,7 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
     <div
       className="qm-scrim"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) requestClose();
       }}
       role="dialog"
       aria-modal="true"
@@ -99,7 +122,7 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
           <button
             type="button"
             className="qm-close"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Zamknij"
           >
             <Icon name="x" size={16} />
@@ -116,16 +139,16 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
               const idx = order.indexOf(tab);
               if (e.key === "ArrowRight") {
                 e.preventDefault();
-                setTab(order[(idx + 1) % order.length]);
+                requestTab(order[(idx + 1) % order.length]);
               } else if (e.key === "ArrowLeft") {
                 e.preventDefault();
-                setTab(order[(idx - 1 + order.length) % order.length]);
+                requestTab(order[(idx - 1 + order.length) % order.length]);
               } else if (e.key === "Home") {
                 e.preventDefault();
-                setTab(order[0]);
+                requestTab(order[0]);
               } else if (e.key === "End") {
                 e.preventDefault();
-                setTab(order[order.length - 1]);
+                requestTab(order[order.length - 1]);
               }
             }}
           >
@@ -137,7 +160,7 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
               aria-controls="panel-details"
               tabIndex={tab === "details" ? 0 : -1}
               className={`qm-tab ${tab === "details" ? "active" : ""}`}
-              onClick={() => setTab("details")}
+              onClick={() => requestTab("details")}
             >
               Szczegóły
             </button>
@@ -149,7 +172,7 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
               aria-controls="panel-team"
               tabIndex={tab === "team" ? 0 : -1}
               className={`qm-tab ${tab === "team" ? "active" : ""}`}
-              onClick={() => setTab("team")}
+              onClick={() => requestTab("team")}
             >
               Zespół ({teamCount})
             </button>
@@ -161,7 +184,7 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
               aria-controls="panel-tasks"
               tabIndex={tab === "tasks" ? 0 : -1}
               className={`qm-tab ${tab === "tasks" ? "active" : ""}`}
-              onClick={() => setTab("tasks")}
+              onClick={() => requestTab("tasks")}
             >
               Zadania{tasksCount > 0 ? ` (${tasksDone}/${tasksCount})` : ""}
             </button>
@@ -173,7 +196,7 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
               aria-controls="panel-history"
               tabIndex={tab === "history" ? 0 : -1}
               className={`qm-tab ${tab === "history" ? "active" : ""}`}
-              onClick={() => setTab("history")}
+              onClick={() => requestTab("history")}
             >
               Historia ({historyCount})
             </button>
@@ -337,6 +360,7 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
                     status={data.status as BackendOrderStatus}
                     productType={data.productType}
                     productionTasks={data.productionTasks}
+                    onDirtyChange={setTasksDirty}
                   />
                 </div>
               )}
@@ -388,11 +412,30 @@ export default function OrderDetailModal({ orderId, onClose }: Props) {
         </div>
 
         <div className="qm-foot">
-          <button type="button" className="btn secondary" onClick={onClose}>
+          <button type="button" className="btn secondary" onClick={requestClose}>
             Zamknij
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={pending !== null}
+        title="Wyjść z listy zadań?"
+        description="Masz niezapisane pozycje. Jeśli teraz wyjdziesz, zaznaczone zadania nie zostaną zapisane."
+        confirmLabel="Wyjdź bez zapisywania"
+        cancelLabel="Wróć do listy"
+        danger
+        icon="alert-triangle"
+        onConfirm={() => {
+          const p = pending;
+          setPending(null);
+          setTasksDirty(false);
+          if (!p) return;
+          if (p.type === "close") onClose();
+          else setTab(p.tab);
+        }}
+        onCancel={() => setPending(null)}
+      />
     </div>
   );
 }
@@ -570,6 +613,7 @@ function TasksSection({
   status,
   productType,
   productionTasks,
+  onDirtyChange,
 }: {
   orderId: number;
   status: BackendOrderStatus;
@@ -580,6 +624,7 @@ function TasksSection({
     completed: boolean | null;
     sequenceNumber: number;
   }[];
+  onDirtyChange: (dirty: boolean) => void;
 }) {
   const canEdit = status === "W_REALIZACJI";
   const [editing, setEditing] = useState(false);
@@ -593,6 +638,11 @@ function TasksSection({
   const [err, setErr] = useState<string | null>(null);
   const toast = useToast();
 
+  // Stan wyjściowy wyboru (do wykrycia niezapisanych zmian).
+  const [baseline, setBaseline] = useState("");
+  const serialize = (set: Set<string>) =>
+    Array.from(set).sort().join("");
+
   // Init selection from existing tasks when entering edit mode
   useEffect(() => {
     if (editing && templates) {
@@ -600,7 +650,9 @@ function TasksSection({
       const completedDescs = templates.existingTasks
         .filter((t) => t.completed)
         .map((t) => t.description);
-      setSelected(new Set(existingDescs));
+      const initial = new Set(existingDescs);
+      setSelected(initial);
+      setBaseline(serialize(initial));
       // Track custom tasks (those not in template list) so they show as extras
       const extras = existingDescs.filter(
         (d) => !templates.templates.includes(d) && !completedDescs.includes(d),
@@ -610,6 +662,19 @@ function TasksSection({
       setCustomDraft("");
     }
   }, [editing, templates]);
+
+  // Niezapisane zmiany = w trybie edycji wybór różni się od wyjściowego
+  // albo jest wpisany (lecz nie dodany) tekst własnego zadania.
+  const dirty =
+    editing &&
+    (serialize(selected) !== baseline || customDraft.trim() !== "");
+
+  useEffect(() => {
+    onDirtyChange(dirty);
+  }, [dirty, onDirtyChange]);
+
+  // Po odmontowaniu (zmiana zakładki / zamknięcie) wyczyść flagę.
+  useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
 
   const toggle = (desc: string) => {
     setSelected((prev) => {

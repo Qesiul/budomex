@@ -646,6 +646,9 @@ a:hover { color: var(--bdx-navy-deep); text-decoration-thickness: 2px; }
 .section { padding: 96px 0; position: relative; }
 .section.compact { padding: 72px 0; }
 .section.paper-2 { background: var(--bdx-paper-2); }
+/* Sąsiadujące sekcje na tym samym tle (paper-2) nie potrzebują podwójnego
+   paddingu na styku — bez separatora 96+96px czyta się jak pusta przerwa. */
+.section.paper-2 + .section.paper-2 { padding-top: 0; }
 .section.dark { background: var(--bdx-navy-ink); color: var(--bdx-paper); }
 .section.dark::before {
   content: ''; position: absolute; inset: 0;
@@ -1192,13 +1195,15 @@ a:hover { color: var(--bdx-navy-deep); text-decoration-thickness: 2px; }
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 48px;
-  align-items: start;
+  align-items: stretch;
 }
 .contact-info {
   background: var(--bdx-paper);
   border: 1px solid var(--bdx-bone);
   border-radius: 6px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .contact-info .info-pad { padding: 28px 28px 24px; }
 .contact-info h3 {
@@ -1228,7 +1233,10 @@ a:hover { color: var(--bdx-navy-deep); text-decoration-thickness: 2px; }
 .info-row .val small { color: var(--fg-3); font-weight: 400; font-family: var(--font-body); }
 
 .map-embed {
-  height: 220px;
+  /* rośnie do wysokości formularza obok (contact-info jest flex-column);
+     min-height trzyma sensowną wysokość w układzie 1-kolumnowym (mobile) */
+  flex: 1;
+  min-height: 220px;
   border-top: 1px solid var(--bdx-bone);
   overflow: hidden;
 }
